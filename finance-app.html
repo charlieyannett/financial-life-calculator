@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finance Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f2eb;
+    --bg2: #ece9e0;
+    --bg3: #fff;
+    --ink: #1a1814;
+    --ink2: #6b6760;
+    --ink3: #9e9b95;
+    --accent: #c4522a;
+    --accent2: #2a6b8a;
+    --accent3: #3a7a4a;
+    --accent4: #7a4a8a;
+    --border: rgba(26,24,20,0.12);
+    --border2: rgba(26,24,20,0.06);
+    --radius: 4px;
+    --radius2: 8px;
+  }
+
+  html { font-size: 16px; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    font-weight: 300;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--ink);
+    display: flex; align-items: stretch;
+    padding: 0 2rem;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .nav-brand {
+    font-family: 'DM Serif Display', serif;
+    color: var(--bg);
+    font-size: 1.1rem;
+    letter-spacing: 0.02em;
+    padding: 1rem 0;
+    margin-right: 2.5rem;
+    white-space: nowrap;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .nav-brand span { color: var(--accent); font-style: italic; }
+  .nav-tabs { display: flex; gap: 0; flex: 1; overflow-x: auto; }
+  .nav-tab {
+    padding: 0 1.25rem;
+    font-size: 0.78rem;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(245,242,235,0.5);
+    cursor: pointer;
+    border: none; background: none;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    white-space: nowrap;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  .nav-tab:hover { color: rgba(245,242,235,0.85); }
+  .nav-tab.active { color: var(--bg); border-bottom-color: var(--accent); }
+  .nav-tab .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: currentColor; opacity: 0.5;
+  }
+  .nav-tab.active .dot { opacity: 1; }
+
+  /* ── LAYOUT ── */
+  main { max-width: 960px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+
+  .calc-panel { display: none; animation: fadeIn 0.2s ease; }
+  .calc-panel.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .panel-header { margin-bottom: 2rem; }
+  .panel-header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2.2rem;
+    font-weight: 400;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.4rem;
+  }
+  .panel-header h1 em { color: var(--accent); font-style: italic; }
+  .panel-header p { font-size: 0.9rem; color: var(--ink2); max-width: 480px; line-height: 1.6; }
+
+  /* ── CONTROLS ── */
+  .controls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 2rem; margin-bottom: 1.75rem; }
+  @media (max-width: 600px) { .controls-grid { grid-template-columns: 1fr; } }
+
+  .control-row { display: flex; flex-direction: column; gap: 6px; }
+  .control-row label {
+    font-size: 0.72rem; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink3);
+  }
+  .control-row .ctrl-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.05rem; font-weight: 500;
+    color: var(--ink);
+    min-height: 1.4rem;
+  }
+  input[type=range] {
+    -webkit-appearance: none; width: 100%; height: 2px;
+    background: var(--border);
+    outline: none; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--ink); cursor: pointer;
+    transition: transform 0.1s;
+  }
+  input[type=range]:hover::-webkit-slider-thumb { transform: scale(1.2); }
+  input[type=range]::-moz-range-thumb {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--ink); cursor: pointer; border: none;
+  }
+
+  /* ── STATS ── */
+  .stats-row { display: grid; gap: 10px; margin-bottom: 1.75rem; }
+  .stats-row.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .stats-row.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .stats-row.cols-5 { grid-template-columns: repeat(5, 1fr); }
+  @media (max-width: 600px) {
+    .stats-row.cols-3, .stats-row.cols-4, .stats-row.cols-5 { grid-template-columns: repeat(2, 1fr); }
+  }
+  .stat-card {
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius2);
+    padding: 14px 16px;
+  }
+  .stat-card .sc-label {
+    font-size: 0.68rem; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink3); margin-bottom: 5px;
+  }
+  .stat-card .sc-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 1.15rem; font-weight: 500;
+    color: var(--ink);
+  }
+  .stat-card .sc-val.accent { color: var(--accent); }
+  .stat-card .sc-val.green { color: var(--accent3); }
+  .stat-card .sc-val.blue { color: var(--accent2); }
+  .stat-card .sc-val.purple { color: var(--accent4); }
+
+  /* ── CHART ── */
+  .chart-section { background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius2); padding: 1.25rem; }
+  .chart-legend {
+    display: flex; flex-wrap: wrap; gap: 14px;
+    margin-bottom: 14px; font-size: 0.75rem; color: var(--ink2);
+  }
+  .chart-legend span { display: flex; align-items: center; gap: 5px; }
+  .chart-legend .swatch { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .chart-wrap { position: relative; width: 100%; }
+
+  /* ── TABS (inner) ── */
+  .inner-tabs { display: flex; gap: 4px; margin-bottom: 1rem; }
+  .inner-tab {
+    padding: 5px 14px;
+    font-size: 0.75rem; font-weight: 400;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: transparent; cursor: pointer;
+    color: var(--ink2); transition: all 0.12s;
+  }
+  .inner-tab.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+  /* ── VERDICT (rent vs buy) ── */
+  .verdict {
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius2);
+    border-left: 3px solid var(--accent);
+    background: var(--bg2);
+    margin-bottom: 1.5rem;
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+  .verdict strong { font-weight: 500; }
+
+  /* ── DIVIDER ── */
+  .section-divider {
+    border: none; border-top: 1px solid var(--border2);
+    margin: 1.5rem 0;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">Finance <span>Calc</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPanel('compound')" id="tab-compound">
+      <span class="dot"></span> Compound Interest
+    </button>
+    <button class="nav-tab" onclick="showPanel('mortgage')" id="tab-mortgage">
+      <span class="dot"></span> Mortgage
+    </button>
+    <button class="nav-tab" onclick="showPanel('rentvbuy')" id="tab-rentvbuy">
+      <span class="dot"></span> Rent vs. Buy
+    </button>
+    <button class="nav-tab" onclick="showPanel('retirement')" id="tab-retirement">
+      <span class="dot"></span> Retirement
+    </button>
+    <button class="nav-tab" onclick="showPanel('debt')" id="tab-debt">
+      <span class="dot"></span> Debt Payoff
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ══════════ COMPOUND INTEREST ══════════ -->
+<div class="calc-panel active" id="panel-compound">
+  <div class="panel-header">
+    <h1>Compound <em>Interest</em></h1>
+    <p>See how your money grows over time when interest earns interest.</p>
+  </div>
+  <div class="controls-grid">
+    <div class="control-row">
+      <label>Initial investment</label>
+      <input type="range" id="ci-principal" min="1000" max="100000" step="1000" value="10000">
+      <div class="ctrl-val" id="ci-principal-out">$10,000</div>
+    </div>
+    <div class="control-row">
+      <label>Annual interest rate</label>
+      <input type="range" id="ci-rate" min="1" max="20" step="0.5" value="7">
+      <div class="ctrl-val" id="ci-rate-out">7.0%</div>
+    </div>
+    <div class="control-row">
+      <label>Years</label>
+      <input type="range" id="ci-years" min="5" max="50" step="1" value="20">
+      <div class="ctrl-val" id="ci-years-out">20 years</div>
+    </div>
+    <div class="control-row">
+      <label>Monthly contribution</label>
+      <input type="range" id="ci-monthly" min="0" max="2000" step="50" value="200">
+      <div class="ctrl-val" id="ci-monthly-out">$200/mo</div>
+    </div>
+  </div>
+  <div class="stats-row cols-3">
+    <div class="stat-card"><div class="sc-label">Final balance</div><div class="sc-val green" id="ci-final">—</div></div>
+    <div class="stat-card"><div class="sc-label">Total contributed</div><div class="sc-val" id="ci-contrib">—</div></div>
+    <div class="stat-card"><div class="sc-label">Interest earned</div><div class="sc-val accent" id="ci-interest">—</div></div>
+  </div>
+  <div class="chart-section">
+    <div class="chart-legend">
+      <span><span class="swatch" style="background:#b5d4f4"></span>Contributions</span>
+      <span><span class="swatch" style="background:#3a7a4a"></span>Interest earned</span>
+    </div>
+    <div class="chart-wrap" style="height:260px"><canvas id="ci-chart"></canvas></div>
+  </div>
+</div>
+
+<!-- ══════════ MORTGAGE ══════════ -->
+<div class="calc-panel" id="panel-mortgage">
+  <div class="panel-header">
+    <h1>Mortgage <em>Calculator</em></h1>
+    <p>Understand your monthly payment and total cost of borrowing.</p>
+  </div>
+  <div class="controls-grid">
+    <div class="control-row">
+      <label>Home price</label>
+      <input type="range" id="mg-price" min="100000" max="1500000" step="10000" value="400000">
+      <div class="ctrl-val" id="mg-price-out">$400,000</div>
+    </div>
+    <div class="control-row">
+      <label>Down payment</label>
+      <input type="range" id="mg-down" min="3" max="50" step="1" value="20">
+      <div class="ctrl-val" id="mg-down-out">20% — $80,000</div>
+    </div>
+    <div class="control-row">
+      <label>Interest rate</label>
+      <input type="range" id="mg-rate" min="2" max="12" step="0.1" value="6.5">
+      <div class="ctrl-val" id="mg-rate-out">6.5%</div>
+    </div>
+    <div class="control-row">
+      <label>Loan term</label>
+      <input type="range" id="mg-term" min="10" max="30" step="5" value="30">
+      <div class="ctrl-val" id="mg-term-out">30 years</div>
+    </div>
+  </div>
+  <div class="stats-row cols-4">
+    <div class="stat-card"><div class="sc-label">Monthly payment</div><div class="sc-val blue" id="mg-monthly">—</div></div>
+    <div class="stat-card"><div class="sc-label">Loan amount</div><div class="sc-val" id="mg-loan">—</div></div>
+    <div class="stat-card"><div class="sc-label">Total interest</div><div class="sc-val accent" id="mg-tinterest">—</div></div>
+    <div class="stat-card"><div class="sc-label">Total paid</div><div class="sc-val" id="mg-total">—</div></div>
+  </div>
+  <div class="inner-tabs">
+    <button class="inner-tab active" id="mg-tab-amort" onclick="mgTab('amort')">Amortization</button>
+    <button class="inner-tab" id="mg-tab-split" onclick="mgTab('split')">Payment split</button>
+  </div>
+  <div class="chart-section">
+    <div id="mg-legend-amort" class="chart-legend">
+      <span><span class="swatch" style="background:#378add"></span>Principal paid</span>
+      <span><span class="swatch" style="background:#c4522a"></span>Interest paid</span>
+      <span><span class="swatch" style="background:#3a7a4a"></span>Remaining balance</span>
+    </div>
+    <div id="mg-legend-split" class="chart-legend" style="display:none">
+      <span><span class="swatch" style="background:#378add"></span>Principal</span>
+      <span><span class="swatch" style="background:#c4522a"></span>Interest</span>
+    </div>
+    <div class="chart-wrap" style="height:260px"><canvas id="mg-chart"></canvas></div>
+  </div>
+</div>
+
+<!-- ══════════ RENT VS BUY ══════════ -->
+<div class="calc-panel" id="panel-rentvbuy">
+  <div class="panel-header">
+    <h1>Rent <em>vs.</em> Buy</h1>
+    <p>Compare the true long-term cost of renting against buying a home.</p>
+  </div>
+  <div class="controls-grid">
+    <div class="control-row">
+      <label>Home price</label>
+      <input type="range" id="rvb-price" min="100000" max="1000000" step="10000" value="400000">
+      <div class="ctrl-val" id="rvb-price-out">$400,000</div>
+    </div>
+    <div class="control-row">
+      <label>Monthly rent</label>
+      <input type="range" id="rvb-rent" min="500" max="5000" step="50" value="2000">
+      <div class="ctrl-val" id="rvb-rent-out">$2,000/mo</div>
+    </div>
+    <div class="control-row">
+      <label>Mortgage rate</label>
+      <input type="range" id="rvb-rate" min="2" max="12" step="0.1" value="6.5">
+      <div class="ctrl-val" id="rvb-rate-out">6.5%</div>
+    </div>
+    <div class="control-row">
+      <label>Down payment</label>
+      <input type="range" id="rvb-down" min="3" max="40" step="1" value="20">
+      <div class="ctrl-val" id="rvb-down-out">20%</div>
+    </div>
+    <div class="control-row">
+      <label>Home appreciation/yr</label>
+      <input type="range" id="rvb-appr" min="0" max="8" step="0.5" value="3">
+      <div class="ctrl-val" id="rvb-appr-out">3.0%/yr</div>
+    </div>
+    <div class="control-row">
+      <label>Rent increase/yr</label>
+      <input type="range" id="rvb-rinc" min="0" max="8" step="0.5" value="3">
+      <div class="ctrl-val" id="rvb-rinc-out">3.0%/yr</div>
+    </div>
+    <div class="control-row">
+      <label>Investment return (if renting)</label>
+      <input type="range" id="rvb-inv" min="1" max="12" step="0.5" value="7">
+      <div class="ctrl-val" id="rvb-inv-out">7.0%/yr</div>
+    </div>
+    <div class="control-row">
+      <label>Years to compare</label>
+      <input type="range" id="rvb-years" min="5" max="30" step="1" value="10">
+      <div class="ctrl-val" id="rvb-years-out">10 years</div>
+    </div>
+  </div>
+  <div id="rvb-verdict" class="verdict">Calculating…</div>
+  <div class="stats-row cols-4">
+    <div class="stat-card"><div class="sc-label">Buy: net worth</div><div class="sc-val blue" id="rvb-buy-nw">—</div></div>
+    <div class="stat-card"><div class="sc-label">Rent: net worth</div><div class="sc-val purple" id="rvb-rent-nw">—</div></div>
+    <div class="stat-card"><div class="sc-label">Buy: total cost</div><div class="sc-val" id="rvb-buy-cost">—</div></div>
+    <div class="stat-card"><div class="sc-label">Rent: total cost</div><div class="sc-val" id="rvb-rent-cost">—</div></div>
+  </div>
+  <div class="chart-section">
+    <div class="chart-legend">
+      <span><span class="swatch" style="background:#2a6b8a"></span>Buy net worth</span>
+      <span><span class="swatch" style="background:#7a4a8a"></span>Rent net worth</span>
+    </div>
+    <div class="chart-wrap" style="height:260px"><canvas id="rvb-chart"></canvas></div>
+  </div>
+</div>
+
+<!-- ══════════ RETIREMENT ══════════ -->
+<div class="calc-panel" id="panel-retirement">
+  <div class="panel-header">
+    <h1>Retirement <em>Planner</em></h1>
+    <p>Project your retirement savings and see if you're on track.</p>
+  </div>
+  <div class="controls-grid">
+    <div class="control-row">
+      <label>Current age</label>
+      <input type="range" id="ret-age" min="18" max="60" step="1" value="30">
+      <div class="ctrl-val" id="ret-age-out">30</div>
+    </div>
+    <div class="control-row">
+      <label>Retirement age</label>
+      <input type="range" id="ret-retage" min="50" max="75" step="1" value="65">
+      <div class="ctrl-val" id="ret-retage-out">65</div>
+    </div>
+    <div class="control-row">
+      <label>Current savings</label>
+      <input type="range" id="ret-saved" min="0" max="500000" step="5000" value="25000">
+      <div class="ctrl-val" id="ret-saved-out">$25,000</div>
+    </div>
+    <div class="control-row">
+      <label>Monthly contribution</label>
+      <input type="range" id="ret-contrib" min="0" max="3000" step="50" value="500">
+      <div class="ctrl-val" id="ret-contrib-out">$500/mo</div>
+    </div>
+    <div class="control-row">
+      <label>Annual return</label>
+      <input type="range" id="ret-rate" min="2" max="12" step="0.5" value="7">
+      <div class="ctrl-val" id="ret-rate-out">7.0%</div>
+    </div>
+    <div class="control-row">
+      <label>Monthly spending in retirement</label>
+      <input type="range" id="ret-spend" min="1000" max="10000" step="250" value="4000">
+      <div class="ctrl-val" id="ret-spend-out">$4,000/mo</div>
+    </div>
+  </div>
+  <div class="stats-row cols-4">
+    <div class="stat-card"><div class="sc-label">Projected at retirement</div><div class="sc-val green" id="ret-projected">—</div></div>
+    <div class="stat-card"><div class="sc-label">Years savings will last</div><div class="sc-val blue" id="ret-years">—</div></div>
+    <div class="stat-card"><div class="sc-label">Safe withdrawal (4%)</div><div class="sc-val" id="ret-safe">—</div></div>
+    <div class="stat-card"><div class="sc-label">Savings needed</div><div class="sc-val accent" id="ret-needed">—</div></div>
+  </div>
+  <div class="chart-section">
+    <div class="chart-legend">
+      <span><span class="swatch" style="background:#b5d4f4"></span>Contributions</span>
+      <span><span class="swatch" style="background:#3a7a4a"></span>Growth</span>
+    </div>
+    <div class="chart-wrap" style="height:260px"><canvas id="ret-chart"></canvas></div>
+  </div>
+</div>
+
+<!-- ══════════ DEBT PAYOFF ══════════ -->
+<div class="calc-panel" id="panel-debt">
+  <div class="panel-header">
+    <h1>Debt <em>Payoff</em></h1>
+    <p>See how extra payments slash your interest and payoff date.</p>
+  </div>
+  <div class="controls-grid">
+    <div class="control-row">
+      <label>Total debt balance</label>
+      <input type="range" id="dt-balance" min="1000" max="100000" step="500" value="20000">
+      <div class="ctrl-val" id="dt-balance-out">$20,000</div>
+    </div>
+    <div class="control-row">
+      <label>Interest rate (APR)</label>
+      <input type="range" id="dt-rate" min="1" max="30" step="0.5" value="18">
+      <div class="ctrl-val" id="dt-rate-out">18.0%</div>
+    </div>
+    <div class="control-row">
+      <label>Minimum monthly payment</label>
+      <input type="range" id="dt-min" min="50" max="2000" step="25" value="400">
+      <div class="ctrl-val" id="dt-min-out">$400/mo</div>
+    </div>
+    <div class="control-row">
+      <label>Extra monthly payment</label>
+      <input type="range" id="dt-extra" min="0" max="1000" step="25" value="100">
+      <div class="ctrl-val" id="dt-extra-out">$100/mo</div>
+    </div>
+  </div>
+  <div class="stats-row cols-4">
+    <div class="stat-card"><div class="sc-label">Payoff: minimum only</div><div class="sc-val" id="dt-months-min">—</div></div>
+    <div class="stat-card"><div class="sc-label">Payoff: with extra</div><div class="sc-val green" id="dt-months-extra">—</div></div>
+    <div class="stat-card"><div class="sc-label">Interest: minimum</div><div class="sc-val accent" id="dt-int-min">—</div></div>
+    <div class="stat-card"><div class="sc-label">Interest saved</div><div class="sc-val blue" id="dt-int-saved">—</div></div>
+  </div>
+  <div class="chart-section">
+    <div class="chart-legend">
+      <span><span class="swatch" style="background:#c4522a"></span>Minimum only</span>
+      <span><span class="swatch" style="background:#3a7a4a"></span>With extra payments</span>
+    </div>
+    <div class="chart-wrap" style="height:260px"><canvas id="dt-chart"></canvas></div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ── UTILS ──
+const fmt = v => '$' + Math.round(v).toLocaleString();
+const fmtk = v => v >= 1000000 ? '$' + (v/1000000).toFixed(1)+'M' : v >= 1000 ? '$' + (v/1000).toFixed(0)+'k' : '$' + Math.round(v);
+const $ = id => document.getElementById(id);
+
+function showPanel(name) {
+  document.querySelectorAll('.calc-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  $('panel-' + name).classList.add('active');
+  $('tab-' + name).classList.add('active');
+}
+
+// ── CHART HELPERS ──
+const charts = {};
+function makeChart(id, config) {
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart($(id).getContext('2d'), config);
+}
+
+const gridColor = 'rgba(0,0,0,0.05)';
+const tickStyle = { color: '#9e9b95', font: { size: 11, family: 'DM Mono' } };
+
+// ════════════════════════════════
+// COMPOUND INTEREST
+// ════════════════════════════════
+function ciUpdate() {
+  const P = +$('ci-principal').value;
+  const r = +$('ci-rate').value;
+  const Y = +$('ci-years').value;
+  const m = +$('ci-monthly').value;
+
+  $('ci-principal-out').textContent = fmt(P);
+  $('ci-rate-out').textContent = r.toFixed(1) + '%';
+  $('ci-years-out').textContent = Y + ' years';
+  $('ci-monthly-out').textContent = m === 0 ? '$0/mo' : fmt(m) + '/mo';
+
+  const labels = [], contrib = [], interest = [];
+  for (let y = 0; y <= Y; y++) {
+    const c = P + m * 12 * y;
+    const b = P * Math.pow(1 + r/100, y) + m * 12 * ((Math.pow(1 + r/100, y) - 1) / (r/100));
+    labels.push(y === 0 ? 'Now' : 'Yr ' + y);
+    contrib.push(Math.round(c));
+    interest.push(Math.round(b - c));
+  }
+
+  const finalBal = contrib[Y] + interest[Y];
+  $('ci-final').textContent = fmt(finalBal);
+  $('ci-contrib').textContent = fmt(contrib[Y]);
+  $('ci-interest').textContent = fmt(interest[Y]);
+
+  makeChart('ci-chart', {
+    type: 'bar',
+    data: { labels, datasets: [
+      { label: 'Contributions', data: contrib, backgroundColor: '#b5d4f4', stack: 'a' },
+      { label: 'Interest', data: interest, backgroundColor: '#3a7a4a', stack: 'a' }
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ' ' + fmt(c.raw) } } },
+      scales: {
+        x: { stacked: true, ticks: { ...tickStyle, autoSkip: true, maxTicksLimit: 12 }, grid: { display: false } },
+        y: { stacked: true, ticks: { ...tickStyle, callback: fmtk }, grid: { color: gridColor } }
+      }
+    }
+  });
+}
+['ci-principal','ci-rate','ci-years','ci-monthly'].forEach(id => $(id).addEventListener('input', ciUpdate));
+ciUpdate();
+
+// ════════════════════════════════
+// MORTGAGE
+// ════════════════════════════════
+let mgCurrentTab = 'amort';
+
+function mgTab(t) {
+  mgCurrentTab = t;
+  $('mg-tab-amort').className = 'inner-tab' + (t==='amort'?' active':'');
+  $('mg-tab-split').className = 'inner-tab' + (t==='split'?' active':'');
+  $('mg-legend-amort').style.display = t==='amort' ? '' : 'none';
+  $('mg-legend-split').style.display = t==='split' ? '' : 'none';
+  mgBuild();
+}
+
+function calcMortgage(loan, rate, term) {
+  const r = rate / 100 / 12, n = term * 12;
+  const pmt = r === 0 ? loan/n : loan * r * Math.pow(1+r,n) / (Math.pow(1+r,n) - 1);
+  const sched = [];
+  let bal = loan;
+  for (let i = 1; i <= n; i++) {
+    const intP = bal * r, prinP = pmt - intP;
+    bal = Math.max(0, bal - prinP);
+    sched.push({ m: i, principal: prinP, interest: intP, balance: bal });
+  }
+  return { pmt, sched };
+}
+
+let mgData = {};
+function mgBuild() {
+  const { pmt, sched, loan, term } = mgData;
+  if (!pmt) return;
+
+  if (mgCurrentTab === 'amort') {
+    const yrs = {};
+    sched.forEach(p => {
+      const y = Math.ceil(p.m/12);
+      if (!yrs[y]) yrs[y] = { p:0, i:0, b:0 };
+      yrs[y].p += p.principal; yrs[y].i += p.interest; yrs[y].b = p.balance;
+    });
+    const entries = Object.entries(yrs);
+    makeChart('mg-chart', {
+      type: 'bar',
+      data: { labels: entries.map(([y]) => 'Yr '+y), datasets: [
+        { label: 'Principal', data: entries.map(([,v]) => Math.round(v.p)), backgroundColor: '#378add', stack:'a', yAxisID:'y' },
+        { label: 'Interest', data: entries.map(([,v]) => Math.round(v.i)), backgroundColor: '#c4522a', stack:'a', yAxisID:'y' },
+        { label: 'Balance', data: entries.map(([,v]) => Math.round(v.b)), type:'line', borderColor:'#3a7a4a', backgroundColor:'rgba(58,122,74,0.07)', pointRadius:0, yAxisID:'y2', tension:0.3 }
+      ]},
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend:{display:false}, tooltip:{callbacks:{label:c=>' '+fmt(c.raw)}} },
+        scales: {
+          x: { stacked:true, ticks:{...tickStyle,autoSkip:true,maxTicksLimit:10}, grid:{display:false} },
+          y: { stacked:true, position:'left', ticks:{...tickStyle,callback:fmtk}, grid:{color:gridColor} },
+          y2: { position:'right', ticks:{...tickStyle,callback:fmtk,color:'#3a7a4a'}, grid:{display:false} }
+        }
+      }
+    });
+  } else {
+    const step = Math.max(1, Math.floor(sched.length / 60));
+    const labs=[], prn=[], intr=[];
+    for (let i=0; i<sched.length; i+=step) {
+      labs.push('Yr '+(sched[i].m/12).toFixed(1));
+      prn.push(Math.round(sched[i].principal));
+      intr.push(Math.round(sched[i].interest));
+    }
+    makeChart('mg-chart', {
+      type: 'line',
+      data: { labels: labs, datasets: [
+        { label:'Principal', data:prn, borderColor:'#378add', backgroundColor:'rgba(55,138,221,0.08)', fill:true, pointRadius:0, tension:0.4 },
+        { label:'Interest', data:intr, borderColor:'#c4522a', backgroundColor:'rgba(196,82,42,0.08)', fill:true, pointRadius:0, tension:0.4 }
+      ]},
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>' '+fmt(c.raw)}}},
+        scales: {
+          x:{ticks:{...tickStyle,autoSkip:true,maxTicksLimit:10},grid:{display:false}},
+          y:{ticks:{...tickStyle,callback:fmtk},grid:{color:gridColor}}
+        }
+      }
+    });
+  }
+}
+
+function mgUpdate() {
+  const price = +$('mg-price').value;
+  const downPct = +$('mg-down').value;
+  const rate = +$('mg-rate').value;
+  const term = +$('mg-term').value;
+  const downAmt = price * downPct / 100;
+  const loan = price - downAmt;
+
+  $('mg-price-out').textContent = fmt(price);
+  $('mg-down-out').textContent = downPct + '% — ' + fmt(downAmt);
+  $('mg-rate-out').textContent = rate.toFixed(1) + '%';
+  $('mg-term-out').textContent = term + ' years';
+
+  const { pmt, sched } = calcMortgage(loan, rate, term);
+  const totalPaid = pmt * term * 12;
+  const totalInterest = totalPaid - loan;
+
+  $('mg-monthly').textContent = fmt(pmt);
+  $('mg-loan').textContent = fmt(loan);
+  $('mg-tinterest').textContent = fmt(totalInterest);
+  $('mg-total').textContent = fmt(totalPaid);
+
+  mgData = { pmt, sched, loan, term };
+  mgBuild();
+}
+['mg-price','mg-down','mg-rate','mg-term'].forEach(id => $(id).addEventListener('input', mgUpdate));
+mgUpdate();
+
+// ════════════════════════════════
+// RENT VS BUY
+// ════════════════════════════════
+function rvbUpdate() {
+  const price = +$('rvb-price').value;
+  const rent0 = +$('rvb-rent').value;
+  const rate = +$('rvb-rate').value;
+  const downPct = +$('rvb-down').value;
+  const appr = +$('rvb-appr').value;
+  const rinc = +$('rvb-rinc').value;
+  const inv = +$('rvb-inv').value;
+  const years = +$('rvb-years').value;
+
+  $('rvb-price-out').textContent = fmt(price);
+  $('rvb-rent-out').textContent = fmt(rent0) + '/mo';
+  $('rvb-rate-out').textContent = rate.toFixed(1) + '%';
+  $('rvb-down-out').textContent = downPct + '%';
+  $('rvb-appr-out').textContent = appr.toFixed(1) + '%/yr';
+  $('rvb-rinc-out').textContent = rinc.toFixed(1) + '%/yr';
+  $('rvb-inv-out').textContent = inv.toFixed(1) + '%/yr';
+  $('rvb-years-out').textContent = years + ' years';
+
+  const downAmt = price * downPct / 100;
+  const loan = price - downAmt;
+  const { pmt } = calcMortgage(loan, rate, 30);
+
+  // Monthly: property tax ~1.2%, insurance ~0.5%, maintenance ~1%
+  const monthlyExtra = price * (0.012 + 0.005 + 0.01) / 12;
+  const totalBuyMonthly = pmt + monthlyExtra;
+
+  const labels = [];
+  const buyNW = [], rentNW = [];
+  let buyNwVal = -downAmt;
+  let homeVal = price;
+  let mortBal = loan;
+  let rentSavings = downAmt; // renter invests down payment
+  let rentTotal = 0, buyTotal = downAmt;
+  let curRent = rent0;
+
+  const r = rate / 100 / 12;
+  const n = 30 * 12;
+  const pmt_ = pmt;
+
+  for (let y = 1; y <= years; y++) {
+    // Buy: 12 months of payments
+    for (let m = 0; m < 12; m++) {
+      const intP = mortBal * r;
+      const prinP = pmt_ - intP;
+      mortBal = Math.max(0, mortBal - prinP);
+    }
+    homeVal *= (1 + appr / 100);
+    buyTotal += totalBuyMonthly * 12;
+    const equity = homeVal - mortBal;
+    buyNwVal = equity;
+    buyNW.push(Math.round(buyNwVal));
+
+    // Rent: invest difference + down payment grows
+    const rentDiff = Math.max(0, totalBuyMonthly - curRent);
+    rentSavings = rentSavings * Math.pow(1 + inv/100, 1) + (rentDiff + curRent*0) * 12;
+    // Actually invest down payment + monthly diff
+    rentSavings = downAmt * Math.pow(1 + inv/100, y) + 0; // recalc properly below
+    rentTotal += curRent * 12;
+    curRent *= (1 + rinc / 100);
+    labels.push('Yr ' + y);
+  }
+
+  // Proper rent savings calc
+  let rs = downAmt;
+  curRent = rent0;
+  let rt = 0;
+  const rentNWArr = [];
+  for (let y = 1; y <= years; y++) {
+    const diff = Math.max(0, totalBuyMonthly - curRent) * 12;
+    rs = rs * (1 + inv/100) + diff;
+    rt += curRent * 12;
+    rentNWArr.push(Math.round(rs));
+    curRent *= (1 + rinc/100);
+  }
+
+  const finalBuyNW = buyNW[years-1];
+  const finalRentNW = rentNWArr[years-1];
+  const diff = finalBuyNW - finalRentNW;
+  const winner = diff > 0 ? 'buying' : 'renting';
+  const absDiff = fmt(Math.abs(diff));
+
+  $('rvb-verdict').innerHTML = `After <strong>${years} years</strong>, <strong>${winner}</strong> comes out ahead by <strong>${absDiff}</strong> in net worth. ${winner === 'buying' ? 'Home equity and appreciation outpace invested savings.' : 'Investing the down payment and monthly savings beats the equity built.'}`;
+
+  $('rvb-buy-nw').textContent = fmt(finalBuyNW);
+  $('rvb-rent-nw').textContent = fmt(finalRentNW);
+  $('rvb-buy-cost').textContent = fmt(buyTotal);
+  $('rvb-rent-cost').textContent = fmt(rt);
+
+  makeChart('rvb-chart', {
+    type: 'line',
+    data: { labels, datasets: [
+      { label: 'Buy NW', data: buyNW, borderColor: '#2a6b8a', backgroundColor: 'rgba(42,107,138,0.08)', fill: true, pointRadius: 0, tension: 0.3 },
+      { label: 'Rent NW', data: rentNWArr, borderColor: '#7a4a8a', backgroundColor: 'rgba(122,74,138,0.08)', fill: true, pointRadius: 0, tension: 0.3 }
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend:{display:false}, tooltip:{callbacks:{label:c=>' '+fmt(c.raw)}} },
+      scales: {
+        x:{ticks:{...tickStyle,autoSkip:true,maxTicksLimit:10},grid:{display:false}},
+        y:{ticks:{...tickStyle,callback:fmtk},grid:{color:gridColor}}
+      }
+    }
+  });
+}
+['rvb-price','rvb-rent','rvb-rate','rvb-down','rvb-appr','rvb-rinc','rvb-inv','rvb-years'].forEach(id => $(id).addEventListener('input', rvbUpdate));
+rvbUpdate();
+
+// ════════════════════════════════
+// RETIREMENT
+// ════════════════════════════════
+function retUpdate() {
+  const age = +$('ret-age').value;
+  const retAge = +$('ret-retage').value;
+  const saved = +$('ret-saved').value;
+  const monthly = +$('ret-contrib').value;
+  const rate = +$('ret-rate').value;
+  const spend = +$('ret-spend').value;
+
+  $('ret-age-out').textContent = age;
+  $('ret-retage-out').textContent = retAge;
+  $('ret-saved-out').textContent = fmt(saved);
+  $('ret-contrib-out').textContent = fmt(monthly) + '/mo';
+  $('ret-rate-out').textContent = rate.toFixed(1) + '%';
+  $('ret-spend-out').textContent = fmt(spend) + '/mo';
+
+  const years = Math.max(1, retAge - age);
+  const r = rate / 100;
+  let bal = saved;
+  const labels = [], contrib = [], growth = [];
+
+  for (let y = 1; y <= years; y++) {
+    const prevBal = bal;
+    bal = bal * (1 + r) + monthly * 12;
+    const totalContrib = saved + monthly * 12 * y;
+    labels.push((age + y) + '');
+    contrib.push(Math.round(totalContrib));
+    growth.push(Math.round(bal - totalContrib));
+  }
+
+  const projected = bal;
+  const safe4 = projected * 0.04 / 12;
+  const needed = spend * 12 / 0.04;
+
+  // How many years will it last
+  let drawBal = projected;
+  const monthlySpend = spend;
+  const mRate = rate / 100 / 12;
+  let months = 0;
+  while (drawBal > 0 && months < 600) {
+    drawBal = drawBal * (1 + mRate) - monthlySpend;
+    months++;
+  }
+  const lastsYears = months >= 600 ? '40+ years' : Math.floor(months/12) + ' years';
+
+  $('ret-projected').textContent = fmt(projected);
+  $('ret-years').textContent = lastsYears;
+  $('ret-safe').textContent = fmt(safe4) + '/mo';
+  $('ret-needed').textContent = fmt(needed);
+
+  makeChart('ret-chart', {
+    type: 'bar',
+    data: { labels, datasets: [
+      { label: 'Contributions', data: contrib, backgroundColor: '#b5d4f4', stack: 'a' },
+      { label: 'Growth', data: growth, backgroundColor: '#3a7a4a', stack: 'a' }
+    ]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend:{display:false}, tooltip:{callbacks:{label:c=>' '+fmt(c.raw)}} },
+      scales: {
+        x:{stacked:true,ticks:{...tickStyle,autoSkip:true,maxTicksLimit:12},grid:{display:false}},
+        y:{stacked:true,ticks:{...tickStyle,callback:fmtk},grid:{color:gridColor}}
+      }
+    }
+  });
+}
+['ret-age','ret-retage','ret-saved','ret-contrib','ret-rate','ret-spend'].forEach(id => $(id).addEventListener('input', retUpdate));
+retUpdate();
+
+// ════════════════════════════════
+// DEBT PAYOFF
+// ════════════════════════════════
+function debtPayoff(balance, rate, payment) {
+  const r = rate / 100 / 12;
+  let bal = balance, months = 0, totalInt = 0;
+  while (bal > 0 && months < 1200) {
+    const intP = bal * r;
+    const prinP = Math.min(payment - intP, bal);
+    if (payment <= intP) return { months: Infinity, totalInt: Infinity }; // can't pay off
+    totalInt += intP;
+    bal -= prinP;
+    months++;
+  }
+  return { months, totalInt };
+}
+
+function dtUpdate() {
+  const balance = +$('dt-balance').value;
+  const rate = +$('dt-rate').value;
+  const minPay = +$('dt-min').value;
+  const extra = +$('dt-extra').value;
+
+  $('dt-balance-out').textContent = fmt(balance);
+  $('dt-rate-out').textContent = rate.toFixed(1) + '%';
+  $('dt-min-out').textContent = fmt(minPay) + '/mo';
+  $('dt-extra-out').textContent = fmt(extra) + '/mo';
+
+  const min = debtPayoff(balance, rate, minPay);
+  const ext = debtPayoff(balance, rate, minPay + extra);
+
+  const fmtMonths = m => m === Infinity ? '∞' : m < 12 ? m + ' mo' : Math.floor(m/12) + 'y ' + (m%12) + 'mo';
+
+  $('dt-months-min').textContent = fmtMonths(min.months);
+  $('dt-months-extra').textContent = fmtMonths(ext.months);
+  $('dt-int-min').textContent = min.totalInt === Infinity ? '∞' : fmt(min.totalInt);
+  $('dt-int-saved').textContent = min.totalInt === Infinity ? '—' : fmt(min.totalInt - ext.totalInt);
+
+  // Build balance-over-time chart
+  const r = rate / 100 / 12;
+  const maxM = min.months === Infinity ? 120 : min.months;
+  const step = Math.max(1, Math.floor(maxM / 60));
+  const labs = [], balMin = [], balExt = [];
+  let bMin = balance, bExt = balance;
+
+  for (let m = 0; m <= maxM; m += step) {
+    labs.push(m === 0 ? 'Now' : m < 12 ? m+'mo' : 'Yr '+(m/12).toFixed(1));
+    balMin.push(Math.max(0, Math.round(bMin)));
+    balExt.push(Math.max(0, Math.round(bExt)));
+    for (let s = 0; s < step; s++) {
+      if (bMin > 0) { const ip = bMin*r; bMin -= (minPay - ip); }
+      if (bExt > 0) { const ip = bExt*r; bExt -= (minPay+extra - ip); }
+    }
+  }
+
+  makeChart('dt-chart', {
+    type: 'line',
+    data: { labels: labs, datasets: [
+      { label: 'Min only', data: balMin, borderColor: '#c4522a', backgroundColor: 'rgba(196,82,42,0.08)', fill:true, pointRadius:0, tension:0.3 },
+      { label: 'With extra', data: balExt, borderColor: '#3a7a4a', backgroundColor: 'rgba(58,122,74,0.08)', fill:true, pointRadius:0, tension:0.3 }
+    ]},
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+fmt(c.raw)}}},
+      scales:{
+        x:{ticks:{...tickStyle,autoSkip:true,maxTicksLimit:10},grid:{display:false}},
+        y:{ticks:{...tickStyle,callback:fmtk},grid:{color:gridColor},min:0}
+      }
+    }
+  });
+}
+['dt-balance','dt-rate','dt-min','dt-extra'].forEach(id => $(id).addEventListener('input', dtUpdate));
+dtUpdate();
+</script>
+</body>
+</html>
