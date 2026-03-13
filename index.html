@@ -492,9 +492,21 @@
   </div>
 </div>
 
-<div style="margin-top:2.5rem; max-height:350px; overflow:hidden;">
-  <iframe src="https://www.myhomesavannah.com/api-site/widget/81901" id="chimeWidget" frameborder="0" style="width:100%;height:100%"></iframe>
-  <script>const chimeWidget = document.getElementById('chimeWidget');window.addEventListener('message', function (e) {try {let data = JSON.parse(e.data);if(data.from === 'chimeSite' && data.event === 'updateBodyRect'){chimeWidget.style.height = data.data.height + 'px'}} catch (error) {console.log(error)}})</script>
+<div id="chimeContainer" style="margin-top:2.5rem; overflow:hidden; position:relative;">
+  <iframe src="https://www.myhomesavannah.com/api-site/widget/81901" id="chimeWidget" frameborder="0" style="width:200%; border:none; transform:scale(0.5); transform-origin:top left;"></iframe>
+  <script>
+    const chimeWidget = document.getElementById('chimeWidget');
+    const chimeContainer = document.getElementById('chimeContainer');
+    window.addEventListener('message', function(e) {
+      try {
+        let data = JSON.parse(e.data);
+        if(data.from === 'chimeSite' && data.event === 'updateBodyRect') {
+          chimeWidget.style.height = data.data.height + 'px';
+          chimeContainer.style.height = (data.data.height * 0.5) + 'px';
+        }
+      } catch(error) { console.log(error) }
+    });
+  </script>
 </div>
 
 </main>
