@@ -218,14 +218,14 @@
 <nav>
   <div class="nav-brand"><img src="logo.png" alt="Yannett Real Estate Advisors" style="height:50px; width:auto;"></div>
   <div class="nav-tabs">
-    <button class="nav-tab active" onclick="showPanel('compound')" id="tab-compound">
-      <span class="dot"></span> Compound Interest
-    </button>
-    <button class="nav-tab" onclick="showPanel('mortgage')" id="tab-mortgage">
+    <button class="nav-tab active" onclick="showPanel('mortgage')" id="tab-mortgage">
       <span class="dot"></span> Mortgage
     </button>
     <button class="nav-tab" onclick="showPanel('rentvbuy')" id="tab-rentvbuy">
       <span class="dot"></span> Rent vs. Buy
+    </button>
+    <button class="nav-tab" onclick="showPanel('compound')" id="tab-compound">
+      <span class="dot"></span> Compound Interest
     </button>
     <button class="nav-tab" onclick="showPanel('retirement')" id="tab-retirement">
       <span class="dot"></span> Retirement
@@ -239,7 +239,7 @@
 <main>
 
 <!-- ══════════ COMPOUND INTEREST ══════════ -->
-<div class="calc-panel active" id="panel-compound">
+<div class="calc-panel" id="panel-compound">
   <div class="panel-header">
     <h1>Compound <em>Interest</em></h1>
     <p>See how your money grows over time when interest earns interest.</p>
@@ -281,7 +281,7 @@
 </div>
 
 <!-- ══════════ MORTGAGE ══════════ -->
-<div class="calc-panel" id="panel-mortgage">
+<div class="calc-panel active" id="panel-mortgage">
   <div class="panel-header">
     <h1>Mortgage <em>Calculator</em></h1>
     <p>Understand your monthly payment and total cost of borrowing.</p>
