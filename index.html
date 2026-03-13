@@ -492,21 +492,26 @@
   </div>
 </div>
 
-<div id="chimeContainer" style="margin-top:2.5rem; overflow:hidden; position:relative; background:#0d0d0d;">
-  <iframe src="https://www.myhomesavannah.com/api-site/widget/81901" id="chimeWidget" frameborder="0" style="width:286%; border:none; transform:scale(0.35); transform-origin:top left;"></iframe>
-  <script>
-    const chimeWidget = document.getElementById('chimeWidget');
-    const chimeContainer = document.getElementById('chimeContainer');
-    window.addEventListener('message', function(e) {
-      try {
-        let data = JSON.parse(e.data);
-        if(data.from === 'chimeSite' && data.event === 'updateBodyRect') {
-          chimeWidget.style.height = data.data.height + 'px';
-          chimeContainer.style.height = (data.data.height * 0.35) + 'px';
-        }
-      } catch(error) { console.log(error) }
-    });
-  </script>
+<div style="margin-top:2.5rem;">
+  <div style="font-size:0.72rem; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; color:#55554e; margin-bottom:0.75rem;">Local Listings</div>
+  <div style="background:#1a1a1a; border:1px solid rgba(255,255,255,0.07); border-radius:8px; overflow:hidden; padding:1.25rem;">
+    <div id="chimeContainer" style="overflow:hidden; position:relative; border-radius:4px;">
+      <iframe src="https://www.myhomesavannah.com/api-site/widget/81901" id="chimeWidget" frameborder="0" style="width:286%; border:none; transform:scale(0.35); transform-origin:top left;"></iframe>
+      <script>
+        const chimeWidget = document.getElementById('chimeWidget');
+        const chimeContainer = document.getElementById('chimeContainer');
+        window.addEventListener('message', function(e) {
+          try {
+            let data = JSON.parse(e.data);
+            if(data.from === 'chimeSite' && data.event === 'updateBodyRect') {
+              chimeWidget.style.height = data.data.height + 'px';
+              chimeContainer.style.height = (data.data.height * 0.35) + 'px';
+            }
+          } catch(error) { console.log(error) }
+        });
+      </script>
+    </div>
+  </div>
 </div>
 
 </main>
