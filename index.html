@@ -10,18 +10,19 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg: #f5f2eb;
-    --bg2: #ece9e0;
-    --bg3: #fff;
-    --ink: #1a1814;
-    --ink2: #6b6760;
-    --ink3: #9e9b95;
-    --accent: #c4522a;
-    --accent2: #2a6b8a;
-    --accent3: #3a7a4a;
-    --accent4: #7a4a8a;
-    --border: rgba(26,24,20,0.12);
-    --border2: rgba(26,24,20,0.06);
+    --bg: #0d0d0d;
+    --bg2: #141414;
+    --bg3: #1a1a1a;
+    --ink: #f0ece3;
+    --ink2: #88887f;
+    --ink3: #55554e;
+    --accent: #c9a227;
+    --accent2: #e0c050;
+    --accent3: #e8c84a;
+    --accent4: #b89030;
+    --border: rgba(255,255,255,0.1);
+    --border2: rgba(255,255,255,0.07);
+    --gold-grad: linear-gradient(120deg, #a07820 0%, #f0d060 35%, #c9a227 65%, #f5e090 100%);
     --radius: 4px;
     --radius2: 8px;
   }
@@ -38,14 +39,14 @@
   /* ── NAV ── */
   nav {
     position: sticky; top: 0; z-index: 100;
-    background: var(--ink);
+    background: #000;
     display: flex; align-items: stretch;
     padding: 0 2rem;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid rgba(255,255,255,0.07);
   }
   .nav-brand {
     font-family: 'DM Serif Display', serif;
-    color: var(--bg);
+    color: var(--ink);
     font-size: 1.1rem;
     letter-spacing: 0.02em;
     padding: 1rem 0;
@@ -53,7 +54,13 @@
     white-space: nowrap;
     display: flex; align-items: center; gap: 0.5rem;
   }
-  .nav-brand span { color: var(--accent); font-style: italic; }
+  .nav-brand span {
+    font-style: italic;
+    background: var(--gold-grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
   .nav-tabs { display: flex; gap: 0; flex: 1; overflow-x: auto; }
   .nav-tab {
     padding: 0 1.25rem;
@@ -61,7 +68,7 @@
     font-weight: 400;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: rgba(245,242,235,0.5);
+    color: rgba(240,236,227,0.4);
     cursor: pointer;
     border: none; background: none;
     border-bottom: 2px solid transparent;
@@ -69,8 +76,8 @@
     white-space: nowrap;
     display: flex; align-items: center; gap: 0.4rem;
   }
-  .nav-tab:hover { color: rgba(245,242,235,0.85); }
-  .nav-tab.active { color: var(--bg); border-bottom-color: var(--accent); }
+  .nav-tab:hover { color: rgba(240,236,227,0.75); }
+  .nav-tab.active { color: var(--ink); border-bottom-color: var(--accent); }
   .nav-tab .dot {
     width: 6px; height: 6px; border-radius: 50%;
     background: currentColor; opacity: 0.5;
@@ -93,7 +100,13 @@
     letter-spacing: -0.01em;
     margin-bottom: 0.4rem;
   }
-  .panel-header h1 em { color: var(--accent); font-style: italic; }
+  .panel-header h1 em {
+    font-style: italic;
+    background: var(--gold-grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
   .panel-header p { font-size: 0.9rem; color: var(--ink2); max-width: 480px; line-height: 1.6; }
 
   /* ── CONTROLS ── */
@@ -114,19 +127,19 @@
   }
   input[type=range] {
     -webkit-appearance: none; width: 100%; height: 2px;
-    background: var(--border);
+    background: rgba(255,255,255,0.12);
     outline: none; cursor: pointer;
   }
   input[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none;
     width: 14px; height: 14px; border-radius: 50%;
-    background: var(--ink); cursor: pointer;
+    background: var(--accent); cursor: pointer;
     transition: transform 0.1s;
   }
   input[type=range]:hover::-webkit-slider-thumb { transform: scale(1.2); }
   input[type=range]::-moz-range-thumb {
     width: 14px; height: 14px; border-radius: 50%;
-    background: var(--ink); cursor: pointer; border: none;
+    background: var(--accent); cursor: pointer; border: none;
   }
 
   /* ── STATS ── */
@@ -178,7 +191,7 @@
     background: transparent; cursor: pointer;
     color: var(--ink2); transition: all 0.12s;
   }
-  .inner-tab.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .inner-tab.active { background: var(--accent); color: #0d0d0d; border-color: var(--accent); font-weight: 500; }
 
   /* ── VERDICT (rent vs buy) ── */
   .verdict {
@@ -259,8 +272,8 @@
   </div>
   <div class="chart-section">
     <div class="chart-legend">
-      <span><span class="swatch" style="background:#b5d4f4"></span>Contributions</span>
-      <span><span class="swatch" style="background:#3a7a4a"></span>Interest earned</span>
+      <span><span class="swatch" style="background:#4a4540"></span>Contributions</span>
+      <span><span class="swatch" style="background:#c9a227"></span>Interest earned</span>
     </div>
     <div class="chart-wrap" style="height:260px"><canvas id="ci-chart"></canvas></div>
   </div>
@@ -306,13 +319,13 @@
   </div>
   <div class="chart-section">
     <div id="mg-legend-amort" class="chart-legend">
-      <span><span class="swatch" style="background:#378add"></span>Principal paid</span>
-      <span><span class="swatch" style="background:#c4522a"></span>Interest paid</span>
-      <span><span class="swatch" style="background:#3a7a4a"></span>Remaining balance</span>
+      <span><span class="swatch" style="background:#7ab0c8"></span>Principal paid</span>
+      <span><span class="swatch" style="background:#c9a227"></span>Interest paid</span>
+      <span><span class="swatch" style="background:#f0ece3"></span>Remaining balance</span>
     </div>
     <div id="mg-legend-split" class="chart-legend" style="display:none">
-      <span><span class="swatch" style="background:#378add"></span>Principal</span>
-      <span><span class="swatch" style="background:#c4522a"></span>Interest</span>
+      <span><span class="swatch" style="background:#7ab0c8"></span>Principal</span>
+      <span><span class="swatch" style="background:#c9a227"></span>Interest</span>
     </div>
     <div class="chart-wrap" style="height:260px"><canvas id="mg-chart"></canvas></div>
   </div>
@@ -375,8 +388,8 @@
   </div>
   <div class="chart-section">
     <div class="chart-legend">
-      <span><span class="swatch" style="background:#2a6b8a"></span>Buy net worth</span>
-      <span><span class="swatch" style="background:#7a4a8a"></span>Rent net worth</span>
+      <span><span class="swatch" style="background:#c9a227"></span>Buy net worth</span>
+      <span><span class="swatch" style="background:#f0ece3"></span>Rent net worth</span>
     </div>
     <div class="chart-wrap" style="height:260px"><canvas id="rvb-chart"></canvas></div>
   </div>
@@ -428,8 +441,8 @@
   </div>
   <div class="chart-section">
     <div class="chart-legend">
-      <span><span class="swatch" style="background:#b5d4f4"></span>Contributions</span>
-      <span><span class="swatch" style="background:#3a7a4a"></span>Growth</span>
+      <span><span class="swatch" style="background:#4a4540"></span>Contributions</span>
+      <span><span class="swatch" style="background:#c9a227"></span>Growth</span>
     </div>
     <div class="chart-wrap" style="height:260px"><canvas id="ret-chart"></canvas></div>
   </div>
@@ -471,8 +484,8 @@
   </div>
   <div class="chart-section">
     <div class="chart-legend">
-      <span><span class="swatch" style="background:#c4522a"></span>Minimum only</span>
-      <span><span class="swatch" style="background:#3a7a4a"></span>With extra payments</span>
+      <span><span class="swatch" style="background:#88887f"></span>Minimum only</span>
+      <span><span class="swatch" style="background:#c9a227"></span>With extra payments</span>
     </div>
     <div class="chart-wrap" style="height:260px"><canvas id="dt-chart"></canvas></div>
   </div>
@@ -500,8 +513,8 @@ function makeChart(id, config) {
   charts[id] = new Chart($(id).getContext('2d'), config);
 }
 
-const gridColor = 'rgba(0,0,0,0.05)';
-const tickStyle = { color: '#9e9b95', font: { size: 11, family: 'DM Mono' } };
+const gridColor = 'rgba(255,255,255,0.07)';
+const tickStyle = { color: '#88887f', font: { size: 11, family: 'DM Mono' } };
 
 // ════════════════════════════════
 // COMPOUND INTEREST
@@ -534,8 +547,8 @@ function ciUpdate() {
   makeChart('ci-chart', {
     type: 'bar',
     data: { labels, datasets: [
-      { label: 'Contributions', data: contrib, backgroundColor: '#b5d4f4', stack: 'a' },
-      { label: 'Interest', data: interest, backgroundColor: '#3a7a4a', stack: 'a' }
+      { label: 'Contributions', data: contrib, backgroundColor: '#4a4540', stack: 'a' },
+      { label: 'Interest', data: interest, backgroundColor: '#c9a227', stack: 'a' }
     ]},
     options: {
       responsive: true, maintainAspectRatio: false,
@@ -593,9 +606,9 @@ function mgBuild() {
     makeChart('mg-chart', {
       type: 'bar',
       data: { labels: entries.map(([y]) => 'Yr '+y), datasets: [
-        { label: 'Principal', data: entries.map(([,v]) => Math.round(v.p)), backgroundColor: '#378add', stack:'a', yAxisID:'y' },
-        { label: 'Interest', data: entries.map(([,v]) => Math.round(v.i)), backgroundColor: '#c4522a', stack:'a', yAxisID:'y' },
-        { label: 'Balance', data: entries.map(([,v]) => Math.round(v.b)), type:'line', borderColor:'#3a7a4a', backgroundColor:'rgba(58,122,74,0.07)', pointRadius:0, yAxisID:'y2', tension:0.3 }
+        { label: 'Principal', data: entries.map(([,v]) => Math.round(v.p)), backgroundColor: '#7ab0c8', stack:'a', yAxisID:'y' },
+        { label: 'Interest', data: entries.map(([,v]) => Math.round(v.i)), backgroundColor: '#c9a227', stack:'a', yAxisID:'y' },
+        { label: 'Balance', data: entries.map(([,v]) => Math.round(v.b)), type:'line', borderColor:'#f0ece3', backgroundColor:'rgba(240,236,227,0.05)', pointRadius:0, yAxisID:'y2', tension:0.3 }
       ]},
       options: {
         responsive: true, maintainAspectRatio: false,
@@ -603,7 +616,7 @@ function mgBuild() {
         scales: {
           x: { stacked:true, ticks:{...tickStyle,autoSkip:true,maxTicksLimit:10}, grid:{display:false} },
           y: { stacked:true, position:'left', ticks:{...tickStyle,callback:fmtk}, grid:{color:gridColor} },
-          y2: { position:'right', ticks:{...tickStyle,callback:fmtk,color:'#3a7a4a'}, grid:{display:false} }
+          y2: { position:'right', ticks:{...tickStyle,callback:fmtk,color:'#f0ece3'}, grid:{display:false} }
         }
       }
     });
@@ -618,8 +631,8 @@ function mgBuild() {
     makeChart('mg-chart', {
       type: 'line',
       data: { labels: labs, datasets: [
-        { label:'Principal', data:prn, borderColor:'#378add', backgroundColor:'rgba(55,138,221,0.08)', fill:true, pointRadius:0, tension:0.4 },
-        { label:'Interest', data:intr, borderColor:'#c4522a', backgroundColor:'rgba(196,82,42,0.08)', fill:true, pointRadius:0, tension:0.4 }
+        { label:'Principal', data:prn, borderColor:'#7ab0c8', backgroundColor:'rgba(122,176,200,0.1)', fill:true, pointRadius:0, tension:0.4 },
+        { label:'Interest', data:intr, borderColor:'#c9a227', backgroundColor:'rgba(201,162,39,0.1)', fill:true, pointRadius:0, tension:0.4 }
       ]},
       options: {
         responsive:true, maintainAspectRatio:false,
@@ -756,8 +769,8 @@ function rvbUpdate() {
   makeChart('rvb-chart', {
     type: 'line',
     data: { labels, datasets: [
-      { label: 'Buy NW', data: buyNW, borderColor: '#2a6b8a', backgroundColor: 'rgba(42,107,138,0.08)', fill: true, pointRadius: 0, tension: 0.3 },
-      { label: 'Rent NW', data: rentNWArr, borderColor: '#7a4a8a', backgroundColor: 'rgba(122,74,138,0.08)', fill: true, pointRadius: 0, tension: 0.3 }
+      { label: 'Buy NW', data: buyNW, borderColor: '#c9a227', backgroundColor: 'rgba(201,162,39,0.1)', fill: true, pointRadius: 0, tension: 0.3 },
+      { label: 'Rent NW', data: rentNWArr, borderColor: '#f0ece3', backgroundColor: 'rgba(240,236,227,0.05)', fill: true, pointRadius: 0, tension: 0.3 }
     ]},
     options: {
       responsive: true, maintainAspectRatio: false,
@@ -827,8 +840,8 @@ function retUpdate() {
   makeChart('ret-chart', {
     type: 'bar',
     data: { labels, datasets: [
-      { label: 'Contributions', data: contrib, backgroundColor: '#b5d4f4', stack: 'a' },
-      { label: 'Growth', data: growth, backgroundColor: '#3a7a4a', stack: 'a' }
+      { label: 'Contributions', data: contrib, backgroundColor: '#4a4540', stack: 'a' },
+      { label: 'Growth', data: growth, backgroundColor: '#c9a227', stack: 'a' }
     ]},
     options: {
       responsive: true, maintainAspectRatio: false,
@@ -901,8 +914,8 @@ function dtUpdate() {
   makeChart('dt-chart', {
     type: 'line',
     data: { labels: labs, datasets: [
-      { label: 'Min only', data: balMin, borderColor: '#c4522a', backgroundColor: 'rgba(196,82,42,0.08)', fill:true, pointRadius:0, tension:0.3 },
-      { label: 'With extra', data: balExt, borderColor: '#3a7a4a', backgroundColor: 'rgba(58,122,74,0.08)', fill:true, pointRadius:0, tension:0.3 }
+      { label: 'Min only', data: balMin, borderColor: '#88887f', backgroundColor: 'rgba(136,136,127,0.1)', fill:true, pointRadius:0, tension:0.3 },
+      { label: 'With extra', data: balExt, borderColor: '#c9a227', backgroundColor: 'rgba(201,162,39,0.12)', fill:true, pointRadius:0, tension:0.3 }
     ]},
     options: {
       responsive:true, maintainAspectRatio:false,
