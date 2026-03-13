@@ -493,7 +493,7 @@
 </div>
 
 <div id="chimeContainer" style="margin-top:2.5rem; overflow:hidden; position:relative;">
-  <iframe src="https://www.myhomesavannah.com/api-site/widget/81901" id="chimeWidget" frameborder="0" style="width:400%; border:none; transform:scale(0.25); transform-origin:top left;"></iframe>
+  <iframe src="https://www.myhomesavannah.com/api-site/widget/81901" id="chimeWidget" frameborder="0" style="width:286%; border:none; transform:scale(0.35); transform-origin:top left;"></iframe>
   <script>
     const chimeWidget = document.getElementById('chimeWidget');
     const chimeContainer = document.getElementById('chimeContainer');
@@ -502,7 +502,7 @@
         let data = JSON.parse(e.data);
         if(data.from === 'chimeSite' && data.event === 'updateBodyRect') {
           chimeWidget.style.height = data.data.height + 'px';
-          chimeContainer.style.height = (data.data.height * 0.25) + 'px';
+          chimeContainer.style.height = (data.data.height * 0.35) + 'px';
         }
       } catch(error) { console.log(error) }
     });
