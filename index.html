@@ -115,6 +115,30 @@
   @media (max-width: 600px) { .controls-grid { grid-template-columns: 1fr; } }
 
   .control-row { display: flex; flex-direction: column; gap: 6px; }
+
+  /* ── INFO TOOLTIPS ── */
+  .info-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 13px; height: 13px; border-radius: 50%;
+    border: 1px solid var(--ink3); color: var(--ink3);
+    font-size: 8px; font-family: 'DM Sans', sans-serif; font-weight: 500;
+    cursor: help; position: relative; margin-left: 5px;
+    vertical-align: middle; flex-shrink: 0; line-height: 1;
+  }
+  .info-btn::after {
+    content: attr(data-tip);
+    position: absolute; bottom: calc(100% + 7px); left: 50%;
+    transform: translateX(-50%);
+    background: #222; color: var(--ink);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px; padding: 7px 10px;
+    font-size: 0.7rem; line-height: 1.5;
+    white-space: normal; width: 190px;
+    pointer-events: none; opacity: 0;
+    transition: opacity 0.15s; z-index: 200;
+    font-weight: 300; text-transform: none; letter-spacing: 0;
+  }
+  .info-btn:hover::after { opacity: 1; }
   .control-row label {
     font-size: 0.72rem; font-weight: 500;
     letter-spacing: 0.08em; text-transform: uppercase;
@@ -246,22 +270,22 @@
   </div>
   <div class="controls-grid">
     <div class="control-row">
-      <label>Initial investment</label>
+      <label>Initial investment <span class="info-btn" data-tip="The lump sum amount you invest upfront today.">i</span></label>
       <input type="range" id="ci-principal" min="1000" max="100000" step="1000" value="10000">
       <div class="ctrl-val" id="ci-principal-out">$10,000</div>
     </div>
     <div class="control-row">
-      <label>Annual interest rate</label>
+      <label>Annual interest rate <span class="info-btn" data-tip="The yearly percentage rate at which your investment grows.">i</span></label>
       <input type="range" id="ci-rate" min="1" max="20" step="0.5" value="7">
       <div class="ctrl-val" id="ci-rate-out">7.0%</div>
     </div>
     <div class="control-row">
-      <label>Years</label>
+      <label>Years <span class="info-btn" data-tip="How long you let your money compound and grow.">i</span></label>
       <input type="range" id="ci-years" min="5" max="70" step="1" value="20">
       <div class="ctrl-val" id="ci-years-out">20 years</div>
     </div>
     <div class="control-row">
-      <label>Monthly contribution</label>
+      <label>Monthly contribution <span class="info-btn" data-tip="Extra money you add to your investment every month on top of your initial amount.">i</span></label>
       <input type="range" id="ci-monthly" min="0" max="2000" step="50" value="200">
       <div class="ctrl-val" id="ci-monthly-out">$200/mo</div>
     </div>
@@ -288,22 +312,22 @@
   </div>
   <div class="controls-grid">
     <div class="control-row">
-      <label>Home price</label>
+      <label>Home price <span class="info-btn" data-tip="The total purchase price of the home you want to buy.">i</span></label>
       <input type="range" id="mg-price" min="100000" max="1500000" step="10000" value="400000">
       <div class="ctrl-val" id="mg-price-out">$400,000</div>
     </div>
     <div class="control-row">
-      <label>Down payment</label>
+      <label>Down payment <span class="info-btn" data-tip="The upfront cash you pay toward the home, expressed as a percentage of the purchase price.">i</span></label>
       <input type="range" id="mg-down" min="3" max="50" step="1" value="20">
       <div class="ctrl-val" id="mg-down-out">20% — $80,000</div>
     </div>
     <div class="control-row">
-      <label>Interest rate</label>
+      <label>Interest rate <span class="info-btn" data-tip="The annual rate your lender charges on the loan. Even small differences have a big impact over 30 years.">i</span></label>
       <input type="range" id="mg-rate" min="2" max="12" step="0.1" value="6.5">
       <div class="ctrl-val" id="mg-rate-out">6.5%</div>
     </div>
     <div class="control-row">
-      <label>Loan term</label>
+      <label>Loan term <span class="info-btn" data-tip="The number of years you have to repay the mortgage. Longer terms mean lower payments but more interest paid.">i</span></label>
       <input type="range" id="mg-term" min="10" max="30" step="5" value="30">
       <div class="ctrl-val" id="mg-term-out">30 years</div>
     </div>
@@ -340,42 +364,42 @@
   </div>
   <div class="controls-grid">
     <div class="control-row">
-      <label>Home price</label>
+      <label>Home price <span class="info-btn" data-tip="The purchase price of the home you are considering buying.">i</span></label>
       <input type="range" id="rvb-price" min="100000" max="1000000" step="10000" value="400000">
       <div class="ctrl-val" id="rvb-price-out">$400,000</div>
     </div>
     <div class="control-row">
-      <label>Monthly rent</label>
+      <label>Monthly rent <span class="info-btn" data-tip="The amount you currently pay or would pay each month to rent a comparable home.">i</span></label>
       <input type="range" id="rvb-rent" min="500" max="5000" step="50" value="2000">
       <div class="ctrl-val" id="rvb-rent-out">$2,000/mo</div>
     </div>
     <div class="control-row">
-      <label>Mortgage rate</label>
+      <label>Mortgage rate <span class="info-btn" data-tip="The annual interest rate on the home loan if you were to buy.">i</span></label>
       <input type="range" id="rvb-rate" min="2" max="12" step="0.1" value="6.5">
       <div class="ctrl-val" id="rvb-rate-out">6.5%</div>
     </div>
     <div class="control-row">
-      <label>Down payment</label>
+      <label>Down payment <span class="info-btn" data-tip="The upfront percentage of the home price you'd pay in cash.">i</span></label>
       <input type="range" id="rvb-down" min="3" max="40" step="1" value="20">
       <div class="ctrl-val" id="rvb-down-out">20%</div>
     </div>
     <div class="control-row">
-      <label>Home appreciation/yr</label>
+      <label>Home appreciation/yr <span class="info-btn" data-tip="The expected annual percentage increase in your home's value.">i</span></label>
       <input type="range" id="rvb-appr" min="0" max="8" step="0.5" value="3">
       <div class="ctrl-val" id="rvb-appr-out">3.0%/yr</div>
     </div>
     <div class="control-row">
-      <label>Rent increase/yr</label>
+      <label>Rent increase/yr <span class="info-btn" data-tip="The expected annual percentage your rent goes up each year.">i</span></label>
       <input type="range" id="rvb-rinc" min="0" max="8" step="0.5" value="3">
       <div class="ctrl-val" id="rvb-rinc-out">3.0%/yr</div>
     </div>
     <div class="control-row">
-      <label>Investment return (if renting)</label>
+      <label>Investment return (if renting) <span class="info-btn" data-tip="If you rent, you can invest the down payment instead. This is the expected annual return on that investment.">i</span></label>
       <input type="range" id="rvb-inv" min="1" max="12" step="0.5" value="7">
       <div class="ctrl-val" id="rvb-inv-out">7.0%/yr</div>
     </div>
     <div class="control-row">
-      <label>Years to compare</label>
+      <label>Years to compare <span class="info-btn" data-tip="The time horizon for the rent vs. buy comparison. The longer you stay, the more buying tends to win.">i</span></label>
       <input type="range" id="rvb-years" min="5" max="30" step="1" value="10">
       <div class="ctrl-val" id="rvb-years-out">10 years</div>
     </div>
@@ -404,32 +428,32 @@
   </div>
   <div class="controls-grid">
     <div class="control-row">
-      <label>Current age</label>
+      <label>Current age <span class="info-btn" data-tip="Your age today. Used to calculate how many years you have to save before retirement.">i</span></label>
       <input type="range" id="ret-age" min="18" max="60" step="1" value="30">
       <div class="ctrl-val" id="ret-age-out">30</div>
     </div>
     <div class="control-row">
-      <label>Retirement age</label>
+      <label>Retirement age <span class="info-btn" data-tip="The age at which you plan to stop working and start drawing from your savings.">i</span></label>
       <input type="range" id="ret-retage" min="50" max="75" step="1" value="65">
       <div class="ctrl-val" id="ret-retage-out">65</div>
     </div>
     <div class="control-row">
-      <label>Current savings</label>
+      <label>Current savings <span class="info-btn" data-tip="The total amount you have already saved for retirement today.">i</span></label>
       <input type="range" id="ret-saved" min="0" max="500000" step="5000" value="25000">
       <div class="ctrl-val" id="ret-saved-out">$25,000</div>
     </div>
     <div class="control-row">
-      <label>Monthly contribution</label>
+      <label>Monthly contribution <span class="info-btn" data-tip="The amount you add to your retirement savings each month going forward.">i</span></label>
       <input type="range" id="ret-contrib" min="0" max="3000" step="50" value="500">
       <div class="ctrl-val" id="ret-contrib-out">$500/mo</div>
     </div>
     <div class="control-row">
-      <label>Annual return</label>
+      <label>Annual return <span class="info-btn" data-tip="The expected yearly growth rate of your retirement investments. The S&P 500 has historically averaged ~7% after inflation.">i</span></label>
       <input type="range" id="ret-rate" min="2" max="12" step="0.5" value="7">
       <div class="ctrl-val" id="ret-rate-out">7.0%</div>
     </div>
     <div class="control-row">
-      <label>Monthly spending in retirement</label>
+      <label>Monthly spending in retirement <span class="info-btn" data-tip="How much you expect to spend each month after you retire, including housing, food, healthcare, and lifestyle.">i</span></label>
       <input type="range" id="ret-spend" min="1000" max="10000" step="250" value="4000">
       <div class="ctrl-val" id="ret-spend-out">$4,000/mo</div>
     </div>
@@ -457,22 +481,22 @@
   </div>
   <div class="controls-grid">
     <div class="control-row">
-      <label>Total debt balance</label>
+      <label>Total debt balance <span class="info-btn" data-tip="The total amount you currently owe across all debt you want to pay off.">i</span></label>
       <input type="range" id="dt-balance" min="1000" max="100000" step="500" value="20000">
       <div class="ctrl-val" id="dt-balance-out">$20,000</div>
     </div>
     <div class="control-row">
-      <label>Interest rate (APR)</label>
+      <label>Interest rate (APR) <span class="info-btn" data-tip="Annual Percentage Rate — the yearly interest charged on your outstanding balance. Credit cards often range from 18–29%.">i</span></label>
       <input type="range" id="dt-rate" min="1" max="30" step="0.5" value="18">
       <div class="ctrl-val" id="dt-rate-out">18.0%</div>
     </div>
     <div class="control-row">
-      <label>Minimum monthly payment</label>
+      <label>Minimum monthly payment <span class="info-btn" data-tip="The smallest required payment your lender accepts each month. Paying only this costs the most in interest.">i</span></label>
       <input type="range" id="dt-min" min="50" max="2000" step="25" value="400">
       <div class="ctrl-val" id="dt-min-out">$400/mo</div>
     </div>
     <div class="control-row">
-      <label>Extra monthly payment</label>
+      <label>Extra monthly payment <span class="info-btn" data-tip="Any amount you pay above the minimum. Even small extra payments can save thousands in interest and years off your payoff date.">i</span></label>
       <input type="range" id="dt-extra" min="0" max="1000" step="25" value="100">
       <div class="ctrl-val" id="dt-extra-out">$100/mo</div>
     </div>
