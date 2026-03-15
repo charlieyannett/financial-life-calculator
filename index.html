@@ -206,6 +206,36 @@
   .chart-legend .swatch { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
   .chart-wrap { position: relative; width: 100%; }
 
+  /* ── ACTION BAR ── */
+  .action-bar {
+    display: flex; justify-content: flex-end; gap: 8px;
+    margin-bottom: 1.5rem;
+  }
+  .action-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 14px; font-size: 0.75rem; font-weight: 400;
+    letter-spacing: 0.05em; border: 1px solid var(--border);
+    border-radius: var(--radius); background: transparent;
+    cursor: pointer; color: var(--ink2); transition: all 0.12s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .action-btn:hover { color: var(--ink); border-color: var(--accent); }
+  .action-btn.success { color: var(--accent); border-color: var(--accent); }
+
+  /* ── PRINT ── */
+  @media print {
+    nav, .action-bar, .inner-tabs, #widget-section, .info-btn { display: none !important; }
+    body { background: #fff !important; color: #111 !important; }
+    .calc-panel { display: none !important; }
+    .calc-panel.active { display: block !important; }
+    .stat-card { background: #f5f5f5 !important; border: 1px solid #ddd !important; }
+    .sc-val, .ctrl-val { color: #111 !important; }
+    .sc-label, .control-row label { color: #666 !important; }
+    input[type=range] { display: none !important; }
+    .chart-section { background: #fff !important; border: 1px solid #ddd !important; }
+    .panel-header h1 em { -webkit-text-fill-color: #c9a227 !important; }
+  }
+
   /* ── TABS (inner) ── */
   .inner-tabs { display: flex; gap: 4px; margin-bottom: 1rem; }
   .inner-tab {
@@ -261,6 +291,17 @@
 </nav>
 
 <main>
+
+<div class="action-bar">
+  <button class="action-btn" onclick="printPage()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+    Print
+  </button>
+  <button class="action-btn" id="share-btn" onclick="shareLink()">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+    Share
+  </button>
+</div>
 
 <!-- ══════════ COMPOUND INTEREST ══════════ -->
 <div class="calc-panel" id="panel-compound">
@@ -516,7 +557,7 @@
   </div>
 </div>
 
-<div style="margin-top:2.5rem;">
+<div id="widget-section" style="margin-top:2.5rem;">
   <div style="font-size:0.72rem; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; color:#55554e; margin-bottom:0.75rem;">Local Listings</div>
   <div style="background:#1a1a1a; border:1px solid rgba(255,255,255,0.07); border-radius:8px; overflow:hidden; padding:1.25rem;">
     <div id="chimeContainer" style="overflow:hidden; position:relative; border-radius:4px;">
@@ -546,11 +587,14 @@ const fmt = v => '$' + Math.round(v).toLocaleString();
 const fmtk = v => v >= 1000000 ? '$' + (v/1000000).toFixed(1)+'M' : v >= 1000 ? '$' + (v/1000).toFixed(0)+'k' : '$' + Math.round(v);
 const $ = id => document.getElementById(id);
 
+let activePanel = 'mortgage';
 function showPanel(name) {
+  activePanel = name;
   document.querySelectorAll('.calc-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   $('panel-' + name).classList.add('active');
   $('tab-' + name).classList.add('active');
+  updateURL();
 }
 
 // ── CHART HELPERS ──
@@ -976,6 +1020,51 @@ function dtUpdate() {
 }
 ['dt-balance','dt-rate','dt-min','dt-extra'].forEach(id => $(id).addEventListener('input', dtUpdate));
 dtUpdate();
+
+// ── URL SHARING ──
+const allSliders = [
+  'ci-principal','ci-rate','ci-years','ci-monthly',
+  'mg-price','mg-down','mg-rate','mg-term',
+  'rvb-price','rvb-rent','rvb-rate','rvb-down','rvb-appr','rvb-rinc','rvb-inv','rvb-years',
+  'ret-age','ret-retage','ret-saved','ret-contrib','ret-rate','ret-spend',
+  'dt-balance','dt-rate','dt-min','dt-extra'
+];
+
+function updateURL() {
+  const params = new URLSearchParams();
+  params.set('p', activePanel);
+  allSliders.forEach(id => { const el = $(id); if (el) params.set(id, el.value); });
+  history.replaceState(null, '', '?' + params.toString());
+}
+
+function loadFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('p')) { activePanel = params.get('p'); showPanel(activePanel); }
+  let changed = false;
+  allSliders.forEach(id => {
+    if (params.has(id)) { const el = $(id); if (el) { el.value = params.get(id); changed = true; } }
+  });
+  if (changed) { ciUpdate(); mgUpdate(); rvbUpdate(); retUpdate(); dtUpdate(); }
+}
+
+function shareLink() {
+  updateURL();
+  navigator.clipboard.writeText(window.location.href).then(() => {
+    const btn = $('share-btn');
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
+    btn.classList.add('success');
+    setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('success'); }, 2000);
+  });
+}
+
+function printPage() { window.print(); }
+
+// Add URL update to all sliders
+allSliders.forEach(id => { const el = $(id); if (el) el.addEventListener('input', updateURL); });
+
+// Load from URL on startup
+loadFromURL();
 </script>
 </body>
 </html>
