@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Math Sanity Tests | Financial Life Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'DM Sans', sans-serif; background: #0d0d0d; color: #f0ece3; padding: 2rem; max-width: 900px; margin: 0 auto; }
+  h1 { font-weight: 400; margin-bottom: 0.25rem; }
+  p.lead { color: #88887f; font-size: 0.9rem; margin-bottom: 1.5rem; }
+  table { width: 100%; border-collapse: collapse; font-family: 'DM Mono', monospace; font-size: 0.85rem; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  th { color: #88887f; font-weight: 500; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; }
+  .pass { color: #7ad07a; }
+  .fail { color: #ff7a7a; font-weight: 500; }
+  .summary { margin-top: 1.5rem; padding: 1rem 1.25rem; border-radius: 6px; background: #1a1a1a; }
+  .summary.ok { border-left: 3px solid #7ad07a; }
+  .summary.bad { border-left: 3px solid #ff7a7a; }
+  a { color: #c9a227; }
+  code { background: #1a1a1a; padding: 2px 5px; border-radius: 3px; font-size: 0.85em; }
+</style>
+</head>
+<body>
+
+<h1>Math Sanity Tests</h1>
+<p class="lead">Verifies the financial math against known correct values. <a href="index.html">← Back to calculator</a></p>
+
+<table>
+  <thead>
+    <tr><th style="width:35%">Test</th><th style="width:25%">Expected</th><th style="width:25%">Actual</th><th>Result</th></tr>
+  </thead>
+  <tbody id="results"></tbody>
+</table>
+
+<div id="summary" class="summary"></div>
+
+<script src="app.js"></script>
+<script>
+const tests = [];
+function check(name, expected, actual, tolerance) {
+  let pass;
+  if (expected === Infinity || actual === Infinity) pass = expected === actual;
+  else pass = Math.abs(actual - expected) <= tolerance;
+  tests.push({ name, expected, actual, pass });
+}
+
+// --- Mortgage PMT ---
+// $300,000 loan at 6% for 30 years → standard answer $1,798.65/mo
+check('PMT: $300k @ 6% / 30y', 1798.65, Calc.pmt(300000, 6, 30), 0.5);
+
+// $200,000 loan at 4.5% for 15 years → $1,529.99
+check('PMT: $200k @ 4.5% / 15y', 1529.99, Calc.pmt(200000, 4.5, 15), 0.5);
+
+// 0% interest sanity: $120,000 / (10*12) = $1,000
+check('PMT: $120k @ 0% / 10y', 1000, Calc.pmt(120000, 0, 10), 0.01);
+
+// --- Compound interest ---
+// $1,000 at 5% for 10y, no contributions → $1,628.89
+let c = Calc.compound(1000, 5, 10, 0);
+check('Compound: $1k @ 5% / 10y, no contrib', 1628.89, c[10].balance, 0.5);
+
+// $0 + $100/mo at 5% for 30 years → closed-form = $1200 * ((1.05^30 - 1)/0.05) ≈ $79,727
+c = Calc.compound(0, 5, 30, 100);
+check('Compound: $0 + $100/mo @ 5% / 30y', 79727, c[30].balance, 5);
+
+// --- Debt payoff (single debt) ---
+// $10,000 @ 12% with $200/mo min, $0 extra
+// Months to pay off ≈ 70 (closed-form: -log(1 - bal*r/pmt) / log(1+r) ≈ 69.66)
+let d = Calc.debtPayoff([{ name: 'x', balance: 10000, rate: 12, minPay: 200 }], 0, 'avalanche');
+check('Debt: $10k @ 12% with $200/mo', 70, d.months, 2);
+
+// Minimum can't cover interest → Infinity
+let d2 = Calc.debtPayoff([{ name: 'x', balance: 10000, rate: 24, minPay: 100 }], 0, 'avalanche');
+check('Debt: minimum < interest → Infinity', Infinity, d2.months, 0);
+
+// --- Avalanche vs snowball ---
+// Two debts: $5k @ 25% (small high), $15k @ 10% (large low)
+// Avalanche targets the 25% one. Snowball targets the $5k one (same here).
+// With wildly different rates: $5k @ 25% min $100, $15k @ 5% min $200, extra $200
+// Avalanche should pay less interest than snowball when rates differ a lot
+const debts = [
+  { name: 'CC', balance: 5000, rate: 25, minPay: 100 },
+  { name: 'Loan', balance: 15000, rate: 5, minPay: 200 },
+];
+const avalanche = Calc.debtPayoff(debts, 200, 'avalanche');
+const snowball = Calc.debtPayoff(debts, 200, 'snowball');
+// They happen to target the same debt here (smallest is also highest rate),
+// so just check both finish in similar time and produce finite interest
+check('Avalanche: $20k mixed debts finishes', 1, avalanche.months < 1200 ? 1 : 0, 0);
+check('Snowball: $20k mixed debts finishes', 1, snowball.months < 1200 ? 1 : 0, 0);
+
+// --- Affordability ---
+// $8,000/mo income, $0 debts, $50k down, 6.5% rate
+// Max housing = min(28% * 8000, 36% * 8000 - 0) = min(2240, 2880) = $2,240/mo
+const aff = Calc.affordability({
+  grossMonthlyIncome: 8000, monthlyDebts: 0, downCash: 50000, mortgageRate: 6.5,
+});
+check('Affordability: max housing', 2240, aff.maxHousing, 0.01);
+check('Affordability: PITI within budget', 1, aff.piti <= 2240 + 0.5 ? 1 : 0, 0);
+
+// With debts that bust back-end: income $5k, debts $1.5k → max back-end = 5000*0.36 - 1500 = $300
+// That's less than 28% front-end ($1400), so max housing = $300
+const aff2 = Calc.affordability({
+  grossMonthlyIncome: 5000, monthlyDebts: 1500, downCash: 20000, mortgageRate: 7,
+});
+check('Affordability: back-end DTI binds', 300, aff2.maxHousing, 0.01);
+
+// Debt-heavy: max housing <= 0
+const aff3 = Calc.affordability({
+  grossMonthlyIncome: 3000, monthlyDebts: 1200, downCash: 0, mortgageRate: 7,
+});
+check('Affordability: too much debt → max price 0', 0, aff3.maxPrice, 0.5);
+
+// --- Rent vs Buy ---
+// Sanity: at very long horizon and high appreciation, buying should win
+const rvb1 = Calc.rentVsBuy({
+  homePrice: 400000, monthlyRent: 2000, mortgageRate: 6, downPct: 20,
+  apprPct: 4, rentIncreasePct: 3, investReturnPct: 6, years: 25,
+});
+check('Rent vs Buy: long horizon + appreciation → buy wins', 1, rvb1.finalBuyNW > rvb1.finalRentNW ? 1 : 0, 0);
+
+// At very short horizon with high selling cost, renting tends to win
+const rvb2 = Calc.rentVsBuy({
+  homePrice: 400000, monthlyRent: 1500, mortgageRate: 7, downPct: 20,
+  apprPct: 2, rentIncreasePct: 2, investReturnPct: 8, years: 4,
+});
+check('Rent vs Buy: short horizon, cheap rent → rent wins', 1, rvb2.finalRentNW > rvb2.finalBuyNW ? 1 : 0, 0);
+
+// --- Retirement ---
+// Age 30 → 65 (35y), $0 saved, $500/mo, 7% return → ~$830k
+const ret = Calc.retirement({
+  currentAge: 30, retireAge: 65, savedNow: 0, monthlyContribution: 500,
+  annualReturn: 7, monthlySpend: 4000, inflationPct: 2.5,
+});
+check('Retirement: $500/mo over 35y @ 7%', 830000, ret.projected, 20000);
+
+// Safe withdrawal: 4% of projected, monthly
+check('Retirement: 4% safe withdrawal', ret.projected * 0.04 / 12, ret.safeMonthly, 1);
+
+// --- Render results ---
+const tbody = document.getElementById('results');
+let passed = 0;
+const fmtVal = v => {
+  if (v === Infinity) return '∞';
+  if (Math.abs(v) >= 1000) return v.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  return Number.isInteger(v) ? String(v) : v.toFixed(2);
+};
+tests.forEach(t => {
+  if (t.pass) passed++;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${t.name}</td>
+    <td>${fmtVal(t.expected)}</td>
+    <td>${fmtVal(t.actual)}</td>
+    <td class="${t.pass ? 'pass' : 'fail'}">${t.pass ? '✓ PASS' : '✗ FAIL'}</td>
+  `;
+  tbody.appendChild(tr);
+});
+const summary = document.getElementById('summary');
+summary.className = 'summary ' + (passed === tests.length ? 'ok' : 'bad');
+summary.innerHTML = `<strong>${passed} / ${tests.length}</strong> tests passed.`;
+</script>
+</body>
+</html>
