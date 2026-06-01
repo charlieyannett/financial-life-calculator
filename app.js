@@ -251,7 +251,29 @@ const fmt = v => '$' + Math.round(v).toLocaleString();
 const fmtk = v => v >= 1000000 ? '$' + (v/1000000).toFixed(1)+'M'
                 : v >= 1000 ? '$' + (v/1000).toFixed(0)+'k'
                 : '$' + Math.round(v);
+// Smart rate formatter: keeps user-typed precision up to 3 decimals, strips trailing zeros
+const fmtRate = v => {
+  if (!isFinite(v)) return '—';
+  const s = (Math.round(v * 1000) / 1000).toString();
+  return s + '%';
+};
 const $ = id => document.getElementById(id);
+
+// Read a slider's effective value — prefers the number input (which can hold ANY decimal,
+// even values off the slider's step/range) over the range itself. Paste-friendly:
+// strips $, commas, %, and whitespace.
+const val = id => {
+  const num = $(id + '-num');
+  if (num) {
+    const cleaned = String(num.value).replace(/[$,\s%]/g, '');
+    if (cleaned !== '' && cleaned !== '-' && cleaned !== '.') {
+      const v = parseFloat(cleaned);
+      if (!isNaN(v)) return v;
+    }
+  }
+  const range = $(id);
+  return range ? parseFloat(range.value) : 0;
+};
 
 // ── ANALYTICS (PostHog) ──────────────────────────────
 // To enable: set window.POSTHOG_KEY before this script loads,
@@ -330,27 +352,45 @@ function setupTabKeyboardNav() {
 }
 
 // ── SLIDER ↔ NUMBER INPUT TWO-WAY BIND ───────────────
+// The number input is the source of truth for the math. It accepts any decimal,
+// not constrained by the slider's step/min/max. The slider tracks the typed value
+// visually; if the typed value is outside the slider's range, the slider pins
+// to its nearest extreme but the math still uses the typed value.
 function bindRangeNum(rangeId) {
   const range = $(rangeId);
   const num = $(rangeId + '-num');
   if (!range || !num) return;
-  num.min = range.min; num.max = range.max; num.step = range.step;
+  // Switch to text + decimal inputmode so users can paste "$1,234.50" or "6.5%"
+  // (type="number" would silently reject those). Mobile gets the decimal keypad.
+  num.type = 'text';
+  num.setAttribute('inputmode', 'decimal');
+  num.setAttribute('autocomplete', 'off');
+  num.removeAttribute('step');
+  num.removeAttribute('min');
+  num.removeAttribute('max');
   num.value = range.value;
-  range.addEventListener('input', () => { num.value = range.value; });
-  num.addEventListener('input', () => {
-    let v = parseFloat(num.value);
-    if (isNaN(v)) return;
-    // Clamp gently on commit, not while typing
-    range.value = v;
-    range.dispatchEvent(new Event('input'));
+
+  // When the user drags the slider, mirror to the number input.
+  // Only respond to trusted (real) input events — synthetic dispatch from the
+  // number input handler must NOT overwrite what the user typed.
+  range.addEventListener('input', e => {
+    if (e.isTrusted) num.value = range.value;
   });
-  num.addEventListener('change', () => {
-    let v = parseFloat(num.value);
-    if (isNaN(v)) v = +range.value;
-    v = Math.max(+range.min, Math.min(+range.max, v));
-    num.value = v;
+
+  // When the user types in the number input, mirror to the slider (which may
+  // clamp/snap) and trigger downstream recalc. val() reads num.value, so the
+  // calc still uses the typed value exactly. Strip $, commas, %, whitespace
+  // so pasted values like "$1,234.50" or "6.5%" parse cleanly.
+  num.addEventListener('input', () => {
+    const cleaned = String(num.value).replace(/[$,\s%]/g, '');
+    const v = parseFloat(cleaned);
+    if (isNaN(v)) return;
+    // Temporarily let the range accept any value, then restore its step
+    const origStep = range.step;
+    range.step = 'any';
     range.value = v;
-    range.dispatchEvent(new Event('input'));
+    range.step = origStep;
+    range.dispatchEvent(new Event('input')); // synthetic → won't clobber num
   });
 }
 
@@ -359,13 +399,13 @@ function bindRangeNum(rangeId) {
 // ════════════════════════════════════════════════
 function ciUpdate() {
   if (!$('ci-principal')) return;
-  const P = +$('ci-principal').value;
-  const r = +$('ci-rate').value;
-  const Y = +$('ci-years').value;
-  const m = +$('ci-monthly').value;
+  const P = val('ci-principal');
+  const r = val('ci-rate');
+  const Y = val('ci-years');
+  const m = val('ci-monthly');
 
   $('ci-principal-out').textContent = fmt(P);
-  $('ci-rate-out').textContent = r.toFixed(1) + '%';
+  $('ci-rate-out').textContent = fmtRate(r);
   $('ci-years-out').textContent = Y + ' years';
   $('ci-monthly-out').textContent = m === 0 ? '$0/mo' : fmt(m) + '/mo';
 
@@ -411,22 +451,22 @@ function mgTab(t) {
 let mgData = {};
 function mgUpdate() {
   if (!$('mg-price')) return;
-  const price = +$('mg-price').value;
-  const downPct = +$('mg-down').value;
-  const rate = +$('mg-rate').value;
-  const term = +$('mg-term').value;
-  const taxPct = +$('mg-tax').value;
-  const insPct = +$('mg-ins').value;
+  const price = val('mg-price');
+  const downPct = val('mg-down');
+  const rate = val('mg-rate');
+  const term = val('mg-term');
+  const taxPct = val('mg-tax');
+  const insPct = val('mg-ins');
 
   const downAmt = price * downPct / 100;
   const loan = price - downAmt;
 
   $('mg-price-out').textContent = fmt(price);
-  $('mg-down-out').textContent = downPct + '% — ' + fmt(downAmt);
-  $('mg-rate-out').textContent = rate.toFixed(1) + '%';
+  $('mg-down-out').textContent = fmtRate(downPct).replace('%', '%') + ' — ' + fmt(downAmt);
+  $('mg-rate-out').textContent = fmtRate(rate);
   $('mg-term-out').textContent = term + ' years';
-  $('mg-tax-out').textContent = taxPct.toFixed(1) + '%/yr';
-  $('mg-ins-out').textContent = insPct.toFixed(2) + '%/yr';
+  $('mg-tax-out').textContent = fmtRate(taxPct) + '/yr';
+  $('mg-ins-out').textContent = fmtRate(insPct) + '/yr';
 
   const { pmt, sched } = Calc.mortgageSchedule(loan, rate, term);
   const monthlyTax = price * taxPct / 100 / 12;
@@ -504,22 +544,22 @@ function mgBuildChart() {
 // ════════════════════════════════════════════════
 function rvbUpdate() {
   if (!$('rvb-price')) return;
-  const homePrice = +$('rvb-price').value;
-  const monthlyRent = +$('rvb-rent').value;
-  const mortgageRate = +$('rvb-rate').value;
-  const downPct = +$('rvb-down').value;
-  const apprPct = +$('rvb-appr').value;
-  const rentIncreasePct = +$('rvb-rinc').value;
-  const investReturnPct = +$('rvb-inv').value;
-  const years = +$('rvb-years').value;
+  const homePrice = val('rvb-price');
+  const monthlyRent = val('rvb-rent');
+  const mortgageRate = val('rvb-rate');
+  const downPct = val('rvb-down');
+  const apprPct = val('rvb-appr');
+  const rentIncreasePct = val('rvb-rinc');
+  const investReturnPct = val('rvb-inv');
+  const years = val('rvb-years');
 
   $('rvb-price-out').textContent = fmt(homePrice);
   $('rvb-rent-out').textContent = fmt(monthlyRent) + '/mo';
-  $('rvb-rate-out').textContent = mortgageRate.toFixed(1) + '%';
-  $('rvb-down-out').textContent = downPct + '%';
-  $('rvb-appr-out').textContent = apprPct.toFixed(1) + '%/yr';
-  $('rvb-rinc-out').textContent = rentIncreasePct.toFixed(1) + '%/yr';
-  $('rvb-inv-out').textContent = investReturnPct.toFixed(1) + '%/yr';
+  $('rvb-rate-out').textContent = fmtRate(mortgageRate);
+  $('rvb-down-out').textContent = fmtRate(downPct);
+  $('rvb-appr-out').textContent = fmtRate(apprPct) + '/yr';
+  $('rvb-rinc-out').textContent = fmtRate(rentIncreasePct) + '/yr';
+  $('rvb-inv-out').textContent = fmtRate(investReturnPct) + '/yr';
   $('rvb-years-out').textContent = years + ' years';
 
   const r = Calc.rentVsBuy({
@@ -564,22 +604,22 @@ function rvbUpdate() {
 function retUpdate() {
   if (!$('ret-age')) return;
   const opts = {
-    currentAge: +$('ret-age').value,
-    retireAge: +$('ret-retage').value,
-    savedNow: +$('ret-saved').value,
-    monthlyContribution: +$('ret-contrib').value,
-    annualReturn: +$('ret-rate').value,
-    monthlySpend: +$('ret-spend').value,
-    inflationPct: +$('ret-infl').value,
+    currentAge: val('ret-age'),
+    retireAge: val('ret-retage'),
+    savedNow: val('ret-saved'),
+    monthlyContribution: val('ret-contrib'),
+    annualReturn: val('ret-rate'),
+    monthlySpend: val('ret-spend'),
+    inflationPct: val('ret-infl'),
   };
 
   $('ret-age-out').textContent = opts.currentAge;
   $('ret-retage-out').textContent = opts.retireAge;
   $('ret-saved-out').textContent = fmt(opts.savedNow);
   $('ret-contrib-out').textContent = fmt(opts.monthlyContribution) + '/mo';
-  $('ret-rate-out').textContent = opts.annualReturn.toFixed(1) + '%';
+  $('ret-rate-out').textContent = fmtRate(opts.annualReturn);
   $('ret-spend-out').textContent = fmt(opts.monthlySpend) + '/mo';
-  $('ret-infl-out').textContent = opts.inflationPct.toFixed(1) + '%/yr';
+  $('ret-infl-out').textContent = fmtRate(opts.inflationPct) + '/yr';
 
   const r = Calc.retirement(opts);
 
@@ -662,7 +702,7 @@ function renderDebtRows() {
 
 function dtUpdate() {
   if (!$('dt-extra')) return;
-  const extra = +$('dt-extra').value;
+  const extra = val('dt-extra');
   $('dt-extra-out').textContent = fmt(extra) + '/mo';
 
   const stratResult = Calc.debtPayoff(debtRows, extra, dtStrategy);
@@ -718,16 +758,16 @@ function dtUpdate() {
 function affUpdate() {
   if (!$('aff-income')) return;
   const opts = {
-    grossMonthlyIncome: +$('aff-income').value,
-    monthlyDebts: +$('aff-debts').value,
-    downCash: +$('aff-down').value,
-    mortgageRate: +$('aff-rate').value,
+    grossMonthlyIncome: val('aff-income'),
+    monthlyDebts: val('aff-debts'),
+    downCash: val('aff-down'),
+    mortgageRate: val('aff-rate'),
   };
 
   $('aff-income-out').textContent = fmt(opts.grossMonthlyIncome) + '/mo';
   $('aff-debts-out').textContent = fmt(opts.monthlyDebts) + '/mo';
   $('aff-down-out').textContent = fmt(opts.downCash);
-  $('aff-rate-out').textContent = opts.mortgageRate.toFixed(1) + '%';
+  $('aff-rate-out').textContent = fmtRate(opts.mortgageRate);
 
   const r = Calc.affordability(opts);
 
@@ -786,7 +826,8 @@ const allSliders = [
 function updateURL() {
   const params = new URLSearchParams();
   params.set('p', activePanel);
-  allSliders.forEach(id => { const el = $(id); if (el) params.set(id, el.value); });
+  // Use val() so typed values (including off-step decimals) survive in the URL
+  allSliders.forEach(id => { if ($(id)) params.set(id, String(val(id))); });
   // also serialize debt rows
   params.set('debts', encodeURIComponent(JSON.stringify(debtRows)));
   params.set('dts', dtStrategy);
