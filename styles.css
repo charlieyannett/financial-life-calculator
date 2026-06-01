@@ -18,13 +18,16 @@
   --radius2: 8px;
 }
 
-html { font-size: 16px; }
+html { font-size: 16px; -webkit-text-size-adjust: 100%; }
 body {
   font-family: 'DM Sans', sans-serif;
   background: var(--bg);
   color: var(--ink);
   min-height: 100vh;
+  min-height: 100dvh; /* avoids mobile URL-bar jump where supported */
   font-weight: 300;
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
 }
 
 /* ── NAV ── */
@@ -33,6 +36,10 @@ nav {
   background: #000;
   display: flex; align-items: stretch;
   padding: 0 2rem;
+  /* Respect notch / status bar when installed as a standalone app */
+  padding-left: max(2rem, env(safe-area-inset-left));
+  padding-right: max(2rem, env(safe-area-inset-right));
+  padding-top: env(safe-area-inset-top);
   border-bottom: 1px solid rgba(255,255,255,0.07);
 }
 .nav-brand {
@@ -45,6 +52,7 @@ nav {
   white-space: nowrap;
   display: flex; align-items: center; gap: 0.5rem;
 }
+.brand-logo { height: 50px; width: auto; display: block; }
 .nav-brand span {
   font-style: italic;
   background: var(--gold-grad);
@@ -77,7 +85,12 @@ nav {
 .nav-tab[aria-selected="true"] .dot { opacity: 1; }
 
 /* ── LAYOUT ── */
-main { max-width: 960px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+main {
+  max-width: 960px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem;
+  padding-left: max(1.5rem, env(safe-area-inset-left));
+  padding-right: max(1.5rem, env(safe-area-inset-right));
+  padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+}
 
 .calc-panel { display: none; animation: fadeIn 0.2s ease; }
 .calc-panel.active { display: block; }
@@ -229,6 +242,7 @@ input[type=range]::-moz-range-thumb {
 .action-bar {
   display: flex; justify-content: flex-end; gap: 8px;
   margin-bottom: 1.5rem;
+  flex-wrap: wrap;
 }
 .action-btn {
   display: flex; align-items: center; gap: 6px;
@@ -363,3 +377,67 @@ input[type=range]::-moz-range-thumb {
 }
 .footer a { color: var(--ink2); text-decoration: none; }
 .footer a:hover { color: var(--accent); }
+
+/* ════════════════════════════════════════════════
+   MOBILE OPTIMIZATION
+   ════════════════════════════════════════════════ */
+
+/* Touch devices (any size): bigger hit targets, no zoom-on-focus.
+   iOS zooms when an input's font-size is < 16px, so force 16px. */
+@media (pointer: coarse) {
+  .num-input,
+  .debt-row input[type=text],
+  .debt-row input[type=number] { font-size: 16px; }
+
+  /* Thin visual track, tall invisible touch area, large thumb */
+  input[type=range] { height: 26px; background: transparent; }
+  input[type=range]::-webkit-slider-runnable-track {
+    height: 3px; border-radius: 3px; background: rgba(255,255,255,0.16);
+  }
+  input[type=range]::-webkit-slider-thumb { width: 24px; height: 24px; margin-top: -10.5px; }
+  input[type=range]::-moz-range-track { height: 3px; border-radius: 3px; background: rgba(255,255,255,0.16); }
+  input[type=range]::-moz-range-thumb { width: 24px; height: 24px; }
+
+  .info-btn { width: 18px; height: 18px; font-size: 10px; }
+  .action-btn { min-height: 40px; padding: 8px 16px; }
+  .inner-tab { min-height: 38px; }
+  .remove-btn { width: 36px; height: 36px; font-size: 20px; }
+  .nav-tab { min-height: 48px; }
+}
+
+/* Phone widths */
+@media (max-width: 600px) {
+  nav { padding-left: max(1rem, env(safe-area-inset-left)); padding-right: max(1rem, env(safe-area-inset-right)); }
+  .nav-brand { margin-right: 1.25rem; }
+  .brand-logo { height: 38px; }
+  .nav-tabs { -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .nav-tabs::-webkit-scrollbar { display: none; }
+  .nav-tab { padding: 0 0.85rem; font-size: 0.72rem; letter-spacing: 0.05em; }
+
+  main { padding: 1.5rem 1rem 3rem; padding-bottom: calc(3rem + env(safe-area-inset-bottom)); }
+
+  .panel-header { margin-bottom: 1.5rem; }
+  .panel-header h1 { font-size: 1.7rem; }
+  .panel-header p { font-size: 0.85rem; }
+
+  .controls-grid { gap: 1.1rem 1rem; margin-bottom: 1.5rem; }
+  .num-input { width: 84px; }
+
+  .stat-card { padding: 12px 13px; }
+  .stat-card .sc-val { font-size: 1.05rem; }
+
+  /* Keep tooltips inside the viewport on small screens */
+  .info-btn::after { width: min(190px, 72vw); }
+
+  .verdict { font-size: 0.84rem; padding: 0.9rem 1rem; }
+  .chart-section { padding: 1rem 0.85rem; }
+
+  .action-bar { justify-content: stretch; gap: 6px; }
+  .action-bar .action-btn { flex: 1 1 auto; justify-content: center; }
+}
+
+/* Very narrow phones */
+@media (max-width: 380px) {
+  .stats-row.cols-3, .stats-row.cols-4, .stats-row.cols-5 { grid-template-columns: 1fr; }
+  .panel-header h1 { font-size: 1.5rem; }
+}

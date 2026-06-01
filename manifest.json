@@ -1,0 +1,59 @@
+{
+  "name": "Financial Life Calculator",
+  "short_name": "Yannett Calc",
+  "description": "Mortgage, rent vs. buy, affordability, compound interest, retirement, and debt payoff calculators by Yannett Real Estate Advisors.",
+  "id": "/",
+  "start_url": "./?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0d0d0d",
+  "theme_color": "#0d0d0d",
+  "categories": ["finance", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Mortgage Calculator",
+      "short_name": "Mortgage",
+      "url": "./?p=mortgage&source=pwa-shortcut",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Home Affordability",
+      "short_name": "Affordability",
+      "url": "./?p=affordability&source=pwa-shortcut",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Rent vs. Buy",
+      "short_name": "Rent vs Buy",
+      "url": "./?p=rentvbuy&source=pwa-shortcut",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

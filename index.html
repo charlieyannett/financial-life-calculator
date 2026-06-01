@@ -2,10 +2,20 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Financial Life Calculator | Yannett Real Estate Advisors</title>
 <meta name="description" content="Free, interactive financial planning calculators: mortgage, rent vs. buy, compound interest, retirement, debt payoff, and home affordability — by Yannett Real Estate Advisors.">
 <meta name="theme-color" content="#0d0d0d">
+
+<!-- PWA / installable web app -->
+<link rel="manifest" href="manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Yannett Calc">
+<meta name="application-name" content="Yannett Calc">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 
 <!-- Open Graph / Twitter -->
 <meta property="og:type" content="website">
@@ -18,7 +28,7 @@
 
 <link rel="icon" type="image/png" href="favicon.png">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=2">
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"
         integrity="sha512-ZwR1/gSZM3ai6vCdI+LVF1zSq/5HznD3ZSTk7kajkaj4D292NLuduDCO1c/NT8Id+jE58KYLKT7hXnbtryGmMg=="
@@ -36,7 +46,7 @@
 <body>
 
 <nav>
-  <div class="nav-brand"><img src="logo.png" alt="Yannett Real Estate Advisors" style="height:50px; width:auto;"></div>
+  <div class="nav-brand"><img class="brand-logo" src="logo.png" alt="Yannett Real Estate Advisors"></div>
   <div class="nav-tabs" role="tablist" aria-label="Calculators">
     <button class="nav-tab" role="tab" aria-selected="true" tabindex="0" id="tab-mortgage" aria-controls="panel-mortgage">
       <span class="dot"></span> Mortgage
@@ -62,6 +72,10 @@
 <main>
 
 <div class="action-bar">
+  <button class="action-btn" id="install-btn" title="Install this app on your device" style="display:none">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"/><polyline points="7 10 12 15 17 10"/><path d="M5 21h14"/></svg>
+    Install app
+  </button>
   <button class="action-btn" id="reset-btn" title="Reset this calculator to defaults">
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9"/><polyline points="3 4 3 9 8 9"/></svg>
     Reset
@@ -503,5 +517,67 @@
 </main>
 
 <script src="app.js?v=3"></script>
+
+<!-- PWA: service worker registration + install handling -->
+<script>
+(function () {
+  // Register the service worker (enables offline + Android install prompt)
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').catch(function () { /* offline still works without it */ });
+    });
+  }
+
+  var installBtn = document.getElementById('install-btn');
+  if (!installBtn) return;
+
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  var ua = window.navigator.userAgent;
+  var isiOS = /iphone|ipad|ipod/i.test(ua) && !window.MSStream;
+  var deferredPrompt = null;
+
+  // Already installed → never show the button
+  if (isStandalone) return;
+
+  // Android / Chromium: capture the install event and drive it from our button
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.style.display = '';
+  });
+
+  window.addEventListener('appinstalled', function () {
+    installBtn.style.display = 'none';
+    deferredPrompt = null;
+  });
+
+  // iOS Safari has no install event — show the button and explain the gesture
+  if (isiOS) installBtn.style.display = '';
+
+  function showIosTip() {
+    var tip = document.createElement('div');
+    tip.setAttribute('role', 'status');
+    tip.style.cssText = 'position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:320px;background:#1a1a1a;color:#f0ece3;border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:14px 16px;font-family:DM Sans,sans-serif;font-size:0.85rem;line-height:1.5;z-index:9999;box-shadow:0 8px 30px rgba(0,0,0,0.5)';
+    tip.innerHTML = 'To install: tap the <strong>Share</strong> icon ' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c9a227" stroke-width="2" style="vertical-align:-2px"><path d="M12 3v12"/><polyline points="7 8 12 3 17 8"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>' +
+      ' below, then choose <strong>“Add to Home Screen”</strong>.' +
+      '<button style="display:block;margin-top:10px;background:#c9a227;color:#0d0d0d;border:none;border-radius:6px;padding:6px 12px;font-family:inherit;font-size:0.8rem;cursor:pointer">Got it</button>';
+    tip.querySelector('button').addEventListener('click', function () { tip.remove(); });
+    document.body.appendChild(tip);
+    setTimeout(function () { if (tip.parentNode) tip.remove(); }, 12000);
+  }
+
+  installBtn.addEventListener('click', async function () {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      try { await deferredPrompt.userChoice; } catch (e) {}
+      deferredPrompt = null;
+      installBtn.style.display = 'none';
+    } else if (isiOS) {
+      showIosTip();
+    }
+  });
+})();
+</script>
 </body>
 </html>
